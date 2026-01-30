@@ -1,0 +1,59 @@
+# NexORA VSCode Setup
+
+## Recommended Extensions
+
+Install these VS Code extensions for the best development experience:
+
+### Essential
+- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) - Linting
+- [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) - Code formatting
+- [Prisma](https://marketplace.visualstudio.com/items?itemName=Prisma.prisma) - Prisma schema support
+- [TypeScript](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-typescript-next) - Enhanced TS support
+
+### Nice to Have
+- [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss) - Tailwind autocomplete
+- [GitLens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens) - Git supercharged
+- [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) - Docker support
+- [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) - Test APIs
+- [Thunder Client](https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client) - Alternative to Postman
+
+## VS Code Settings
+
+Create `.vscode/settings.json`:
+
+```json
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ]
+}
+```
+
+## Keyboard Shortcuts
+
+| Action | Shortcut |
+|--------|----------|
+| Open terminal | Ctrl + ` |
+| Run task | Ctrl + Shift + B |
+| Find in files | Ctrl + Shift + F |
+| Command palette | Ctrl + Shift + P |
+| Quick open | Ctrl + P |
+
+## Snippets
+
+Create custom snippets in `.vscode/snippets.code-snippets`
+
+## Debugging
+
+Launch configurations are in `.vscode/launch.json`
