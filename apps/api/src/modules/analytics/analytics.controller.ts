@@ -6,8 +6,8 @@ import {
   UseGuards,
   Req,
   Res,
+  Response as NestResponse,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -51,7 +51,7 @@ export class AnalyticsController {
     @Param('workspaceId') workspaceId: string,
     @Query('format') format: string,
     @Req() req: any,
-    @Res() res: Response,
+    @Res() res: any,
   ) {
     const data = await this.analyticsService.exportDashboardData(workspaceId, req.user.userId);
 
@@ -63,7 +63,7 @@ export class AnalyticsController {
     return res.json(data);
   }
 
-  private exportAsCSV(data: any, res: Response) {
+  private exportAsCSV(data: any, res: any) {
     const csvRows: string[] = [];
 
     // Workspace Info

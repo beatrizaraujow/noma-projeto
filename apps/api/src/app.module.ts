@@ -20,6 +20,7 @@ import { SearchModule } from './modules/search/search.module';
 import { SavedFiltersModule } from './modules/saved-filters/saved-filters.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AIModule } from './modules/ai/ai.module';
+import { AutomationModule } from './modules/automation/automation.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { AIModule } from './modules/ai/ai.module';
     SavedFiltersModule,
     AnalyticsModule,
     AIModule,
+    AutomationModule,
     WebsocketModule,
   ],
   controllers: [AppController],
