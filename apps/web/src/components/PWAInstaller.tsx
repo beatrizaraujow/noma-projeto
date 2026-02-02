@@ -15,6 +15,15 @@ export function PWAInstaller() {
           setInterval(() => {
             registration.update();
           }, 60 * 60 * 1000);
+
+          // Detectar quando está online/offline
+          window.addEventListener('online', () => {
+            console.log('Conexão restaurada');
+            // Sincronizar dados offline
+            if ('sync' in registration) {
+              (registration as any).sync.register('sync-tasks');
+            }
+          });
         })
         .catch((error) => {
           console.error('Erro ao registrar Service Worker:', error);
@@ -27,15 +36,6 @@ export function PWAInstaller() {
           if (confirm('Nova versão disponível! Deseja atualizar?')) {
             window.location.reload();
           }
-        }
-      });
-
-      // Detectar quando está online/offline
-      window.addEventListener('online', () => {
-        console.log('Conexão restaurada');
-        // Sincronizar dados offline
-        if ('sync' in registration) {
-          registration.sync.register('sync-tasks');
         }
       });
 
