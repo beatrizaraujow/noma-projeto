@@ -179,6 +179,27 @@ export default function WorkspaceDetailPage() {
             <span>{workspace._count.projects} projetos</span>
             <span>{workspace._count.members} membros</span>
           </div>
+          <div className="mt-4">
+            <button
+              onClick={() => router.push(`/workspaces/${params.id}/dashboard`)}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm inline-flex items-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              Ver Dashboard & Analytics
+            </button>
+          </div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">

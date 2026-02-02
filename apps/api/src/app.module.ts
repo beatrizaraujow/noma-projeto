@@ -18,6 +18,8 @@ import { ActivitiesModule } from './modules/activities/activities.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { SearchModule } from './modules/search/search.module';
 import { SavedFiltersModule } from './modules/saved-filters/saved-filters.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { AIModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { SavedFiltersModule } from './modules/saved-filters/saved-filters.module
     AttachmentsModule,
     SearchModule,
     SavedFiltersModule,
+    AnalyticsModule,
+    AIModule,
     WebsocketModule,
   ],
   controllers: [AppController],
