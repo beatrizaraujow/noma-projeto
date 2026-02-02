@@ -95,6 +95,10 @@ export class UpdateProjectMemberDto {
 
   @IsBoolean()
   @IsOptional()
+  canEdit?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
   canDelete?: boolean;
 
   @IsBoolean()
