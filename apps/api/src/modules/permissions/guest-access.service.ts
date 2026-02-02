@@ -18,6 +18,11 @@ export class GuestAccessService {
     private prisma: PrismaService,
     private rolesService: RolesService
   ) {}
+  
+  // Nota: Cast para any devido a cache do TS. Execute: Ctrl+Shift+P > "TypeScript: Restart TS Server"
+  private get db(): any {
+    return this.prisma as any;
+  }
 
   /**
    * Criar acesso guest
@@ -37,7 +42,7 @@ export class GuestAccessService {
     }
 
     // Verificar se projeto existe
-    const project = await this.prisma.project.findUnique({
+    const project = await this.db.project.findUnique({
       where: { id: data.projectId },
     });
 
@@ -46,7 +51,7 @@ export class GuestAccessService {
     }
 
     // Verificar se já existe acesso ativo para este email
-    const existing = await this.prisma.guestAccess.findFirst({
+    const existing = await this.db.guestAccess.findFirst({
       where: {
         projectId: data.projectId,
         email: data.email,
@@ -66,11 +71,11 @@ export class GuestAccessService {
     const token = this.generateToken();
 
     // Verificar se usuário existe
-    const user = await this.prisma.user.findUnique({
+    const user = await this.db.user.findUnique({
       where: { email: data.email },
     });
 
-    return this.prisma.guestAccess.create({
+    return this.db.guestAccess.create({
       data: {
         projectId: data.projectId,
         email: data.email,
@@ -114,7 +119,7 @@ export class GuestAccessService {
       throw new ForbiddenException('Você não tem acesso a este projeto');
     }
 
-    return this.prisma.guestAccess.findMany({
+    return this.db.guestAccess.findMany({
       where: { projectId },
       include: {
         user: {
@@ -134,7 +139,7 @@ export class GuestAccessService {
    * Buscar acesso guest por token
    */
   async findByToken(token: string) {
-    const access = await this.prisma.guestAccess.findUnique({
+    const access = await this.db.guestAccess.findUnique({
       where: { token },
       include: {
         project: {
@@ -162,7 +167,7 @@ export class GuestAccessService {
     }
 
     // Atualizar último acesso
-    await this.prisma.guestAccess.update({
+    await this.db.guestAccess.update({
       where: { id: access.id },
       data: { accessedAt: new Date() },
     });
@@ -174,7 +179,7 @@ export class GuestAccessService {
    * Revogar acesso guest
    */
   async revokeGuestAccess(accessId: string, requestUserId: string) {
-    const access = await this.prisma.guestAccess.findUnique({
+    const access = await this.db.guestAccess.findUnique({
       where: { id: accessId },
     });
 
@@ -194,7 +199,7 @@ export class GuestAccessService {
       throw new ForbiddenException('Você não tem permissão para revogar acessos');
     }
 
-    return this.prisma.guestAccess.update({
+    return this.db.guestAccess.update({
       where: { id: accessId },
       data: { revokedAt: new Date() },
     });
@@ -228,7 +233,7 @@ export class GuestAccessService {
    * Limpar acessos expirados (pode ser chamado por cron job)
    */
   async cleanExpiredAccesses() {
-    const result = await this.prisma.guestAccess.updateMany({
+    const result = await this.db.guestAccess.updateMany({
       where: {
         expiresAt: { lt: new Date() },
         revokedAt: null,

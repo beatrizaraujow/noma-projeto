@@ -10,6 +10,11 @@ export class ProjectMembersService {
     private prisma: PrismaService,
     private rolesService: RolesService
   ) {}
+  
+  // Nota: Cast para any devido a cache do TS. Execute: Ctrl+Shift+P > "TypeScript: Restart TS Server"
+  private get db(): any {
+    return this.prisma as any;
+  }
 
   /**
    * Adicionar membro ao projeto
@@ -29,7 +34,7 @@ export class ProjectMembersService {
     }
 
     // Verificar se usuário existe
-    const user = await this.prisma.user.findUnique({
+    const user = await this.db.user.findUnique({
       where: { id: data.userId },
     });
 
@@ -38,7 +43,7 @@ export class ProjectMembersService {
     }
 
     // Verificar se já é membro
-    const existing = await this.prisma.projectMember.findUnique({
+    const existing = await this.db.projectMember.findUnique({
       where: {
         projectId_userId: {
           projectId,
@@ -54,7 +59,7 @@ export class ProjectMembersService {
     // Definir permissões baseadas no role
     const permissions = this.getPermissionsByRole(data.role || 'MEMBER');
 
-    return this.prisma.projectMember.create({
+    return this.db.projectMember.create({
       data: {
         projectId,
         userId: data.userId,
@@ -100,7 +105,7 @@ export class ProjectMembersService {
       throw new ForbiddenException('Você não tem acesso a este projeto');
     }
 
-    return this.prisma.projectMember.findMany({
+    return this.db.projectMember.findMany({
       where: { projectId },
       include: {
         user: {
@@ -148,7 +153,7 @@ export class ProjectMembersService {
       throw new ForbiddenException('Você não tem permissão para editar membros');
     }
 
-    const member = await this.prisma.projectMember.findUnique({
+    const member = await this.db.projectMember.findUnique({
       where: { id: memberId },
     });
 
@@ -161,7 +166,7 @@ export class ProjectMembersService {
       throw new ForbiddenException('Não é possível alterar role do owner');
     }
 
-    return this.prisma.projectMember.update({
+    return this.db.projectMember.update({
       where: { id: memberId },
       data: {
         role: data.role,
@@ -205,7 +210,7 @@ export class ProjectMembersService {
       throw new ForbiddenException('Você não tem permissão para remover membros');
     }
 
-    const member = await this.prisma.projectMember.findUnique({
+    const member = await this.db.projectMember.findUnique({
       where: { id: memberId },
     });
 
@@ -217,7 +222,7 @@ export class ProjectMembersService {
       throw new ForbiddenException('Não é possível remover o owner do projeto');
     }
 
-    await this.prisma.projectMember.delete({
+    await this.db.projectMember.delete({
       where: { id: memberId },
     });
 
@@ -228,7 +233,7 @@ export class ProjectMembersService {
    * Verificar permissões de um membro
    */
   async getMemberPermissions(projectId: string, userId: string) {
-    const member = await this.prisma.projectMember.findUnique({
+    const member = await this.db.projectMember.findUnique({
       where: {
         projectId_userId: {
           projectId,

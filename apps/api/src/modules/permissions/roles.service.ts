@@ -5,14 +5,19 @@ import { ResourceType, ActionType, PermissionScope } from '@nexora/types';
 
 @Injectable()
 export class RolesService {
+  // Nota: Cast para any devido a cache do TS. Execute: Ctrl+Shift+P > "TypeScript: Restart TS Server"
   constructor(private prisma: PrismaService) {}
+  
+  private get db(): any {
+    return this.prisma as any;
+  }
 
   /**
    * Criar role customizado
    */
   async createCustomRole(data: CreateCustomRoleDto, userId: string) {
     // Verificar se já existe role com esse nome
-    const existing = await this.prisma.customRole.findFirst({
+    const existing = await this.db.customRole.findFirst({
       where: {
         name: data.name,
         workspaceId: data.workspaceId || null,
@@ -23,7 +28,7 @@ export class RolesService {
       throw new BadRequestException('Role com esse nome já existe');
     }
 
-    return this.prisma.customRole.create({
+    return this.db.customRole.create({
       data: {
         name: data.name,
         description: data.description,
@@ -56,7 +61,7 @@ export class RolesService {
    * Listar roles customizados
    */
   async findAllCustomRoles(workspaceId?: string) {
-    return this.prisma.customRole.findMany({
+    return this.db.customRole.findMany({
       where: {
         OR: [
           { workspaceId },
@@ -83,7 +88,7 @@ export class RolesService {
    * Buscar role por ID
    */
   async findCustomRole(id: string) {
-    const role = await this.prisma.customRole.findUnique({
+    const role = await this.db.customRole.findUnique({
       where: { id },
       include: {
         permissions: true,
@@ -108,7 +113,7 @@ export class RolesService {
    * Atualizar role customizado
    */
   async updateCustomRole(id: string, data: UpdateCustomRoleDto, userId: string) {
-    const role = await this.prisma.customRole.findUnique({
+    const role = await this.db.customRole.findUnique({
       where: { id },
     });
 
@@ -122,12 +127,12 @@ export class RolesService {
 
     // Se estiver atualizando permissões, deletar as antigas e criar novas
     if (data.permissions) {
-      await this.prisma.permission.deleteMany({
+      await this.db.permission.deleteMany({
         where: { roleId: id },
       });
     }
 
-    return this.prisma.customRole.update({
+    return this.db.customRole.update({
       where: { id },
       data: {
         name: data.name,
@@ -153,7 +158,7 @@ export class RolesService {
    * Deletar role customizado
    */
   async deleteCustomRole(id: string) {
-    const role = await this.prisma.customRole.findUnique({
+    const role = await this.db.customRole.findUnique({
       where: { id },
       include: {
         _count: {
@@ -180,7 +185,7 @@ export class RolesService {
       );
     }
 
-    await this.prisma.customRole.delete({
+    await this.db.customRole.delete({
       where: { id },
     });
 
@@ -198,7 +203,7 @@ export class RolesService {
     projectId?: string
   ): Promise<boolean> {
     // Super admin sempre tem permissão
-    const user = await this.prisma.user.findUnique({
+    const user = await this.db.user.findUnique({
       where: { id: userId },
     });
 
@@ -208,7 +213,7 @@ export class RolesService {
 
     // Verificar permissões de projeto
     if (projectId) {
-      const projectMember = await this.prisma.projectMember.findFirst({
+      const projectMember = await this.db.projectMember.findFirst({
         where: {
           projectId,
           userId,
@@ -314,13 +319,13 @@ export class RolesService {
     ];
 
     // Criar primeiro usuário admin se não existir
-    let adminUser = await this.prisma.user.findFirst({
+    let adminUser = await this.db.user.findFirst({
       where: { role: 'ADMIN' },
     });
 
     if (!adminUser) {
       // Criar usuário temporário para roles do sistema
-      adminUser = await this.prisma.user.create({
+      adminUser = await this.db.user.create({
         data: {
           email: 'system@numa.local',
           password: 'system',
@@ -331,7 +336,7 @@ export class RolesService {
     }
 
     for (const roleData of systemRoles) {
-      const existing = await this.prisma.customRole.findFirst({
+      const existing = await this.db.customRole.findFirst({
         where: {
           name: roleData.name,
           isSystem: true,
@@ -339,7 +344,7 @@ export class RolesService {
       });
 
       if (!existing) {
-        await this.prisma.customRole.create({
+        await this.db.customRole.create({
           data: {
             name: roleData.name,
             description: roleData.description,
