@@ -8,6 +8,9 @@ export interface User {
   updatedAt: Date;
 }
 
+// Permissions & Roles
+export * from './permissions';
+
 export interface CreateUserDto {
   email: string;
   password: string;

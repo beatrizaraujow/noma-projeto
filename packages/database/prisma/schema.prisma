@@ -20,14 +20,18 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ownedProjects      Project[]           @relation("ProjectOwner")
-  projects           Project[]           @relation("ProjectMembers")
-  tasks              Task[]
-  comments           Comment[]
-  activities         Activity[]
+  ownedProjects        Project[]           @relation("ProjectOwner")
+  projects             Project[]           @relation("ProjectMembers")
+  tasks                Task[]
+  comments             Comment[]
+  activities           Activity[]
   workspaceMemberships WorkspaceMember[]
-  sentInvites        WorkspaceInvite[]   @relation("InviteSender")
-  savedFilters       SavedFilter[]
+  sentInvites          WorkspaceInvite[]   @relation("InviteSender")
+  savedFilters         SavedFilter[]
+  projectMemberships   ProjectMember[]
+  customRoles          CustomRole[]
+  auditLogs            AuditLog[]
+  guestAccesses        GuestAccess[]
 
   @@map("users")
 }
@@ -49,19 +53,22 @@ model Workspace {
 }
 
 model WorkspaceMember {
-  id          String   @id @default(cuid())
-  workspaceId String
-  userId      String
-  role        String   @default("MEMBER") // OWNER, ADMIN, MEMBER
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  workspaceId  String
+  userId       String
+  role         String   @default("MEMBER") // OWNER, ADMIN, MEMBER
+  customRoleId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customRole CustomRole? @relation(fields: [customRoleId], references: [id])
 
   @@unique([workspaceId, userId])
   @@index([workspaceId])
   @@index([userId])
+  @@index([customRoleId])
   @@map("workspace_members")
 }
 
@@ -96,11 +103,13 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  owner      User       @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  members    User[]     @relation("ProjectMembers")
-  tasks      Task[]
-  activities Activity[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  owner          User            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members        User[]          @relation("ProjectMembers")
+  tasks          Task[]
+  activities     Activity[]
+  projectMembers ProjectMember[]
+  guestAccesses  GuestAccess[]
 
   @@index([workspaceId])
   @@map("projects")
@@ -203,3 +212,110 @@ model SavedFilter {
   @@index([entityType])
   @@map("saved_filters")
 }
+
+// ==================== PERMISSIONS & ROLES ====================
+
+model CustomRole {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  workspaceId String?
+  isSystem    Boolean  @default(false) // System roles cannot be deleted
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy        User              @relation(fields: [createdById], references: [id])
+  permissions      Permission[]
+  projectMembers   ProjectMember[]
+  workspaceMembers WorkspaceMember[]
+
+  @@unique([name, workspaceId])
+  @@index([workspaceId])
+  @@map("custom_roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  roleId      String
+  resource    String   // 'project', 'task', 'comment', 'member', etc.
+  action      String   // 'view', 'create', 'edit', 'delete', 'manage'
+  scope       String   @default("all") // 'all', 'own', 'assigned'
+  conditions  Json?    // Additional conditions as JSON
+  createdAt   DateTime @default(now())
+
+  role CustomRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resource, action, scope])
+  @@index([roleId])
+  @@map("permissions")
+}
+
+model ProjectMember {
+  id         String   @id @default(cuid())
+  projectId  String
+  userId     String
+  roleId     String?
+  role       String   @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER, CUSTOM
+  canView    Boolean  @default(true)
+  canEdit    Boolean  @default(false)
+  canDelete  Boolean  @default(false)
+  canManage  Boolean  @default(false) // Manage members and settings
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customRole CustomRole? @relation(fields: [roleId], references: [id])
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("project_members")
+}
+
+model GuestAccess {
+  id         String    @id @default(cuid())
+  projectId  String
+  userId     String?
+  email      String
+  token      String    @unique
+  canView    Boolean   @default(true)
+  canComment Boolean   @default(false)
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  accessedAt DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@index([projectId])
+  @@index([token])
+  @@index([email])
+  @@map("guest_accesses")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String   // 'create', 'update', 'delete', 'view', 'login', etc.
+  resource    String   // 'project', 'task', 'user', 'permission', etc.
+  resourceId  String?
+  description String
+  metadata    Json?    // Additional context (changes, IP, user agent, etc.)
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
