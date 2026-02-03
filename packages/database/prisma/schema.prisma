@@ -411,3 +411,83 @@ model AutoAssignRule {
   @@index([priority])
   @@map("auto_assign_rules")
 }
+
+model Workflow {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  icon        String?
+  color       String?
+  trigger     Json // Trigger configuration (type: manual/webhook/scheduled/event, config)
+  active      Boolean  @default(true)
+  version     Int      @default(1)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  steps      WorkflowStep[]
+  executions WorkflowExecution[]
+
+  @@index([workspaceId])
+  @@index([active])
+  @@map("workflows")
+}
+
+model WorkflowStep {
+  id         String  @id @default(cuid())
+  workflowId String
+  name       String
+  type       String // 'action', 'condition', 'loop', 'delay', 'webhook', 'notification'
+  config     Json // Step configuration
+  position   Int // Order in workflow
+  parentId   String? // For nested steps (inside conditions/loops)
+  nextStepId String? // Next step to execute (can be conditional)
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([position])
+  @@index([parentId])
+  @@map("workflow_steps")
+}
+
+model WorkflowExecution {
+  id          String    @id @default(cuid())
+  workflowId  String
+  status      String // 'running', 'completed', 'failed', 'cancelled'
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  input       Json? // Input data
+  output      Json? // Output data
+  logs        Json[] // Execution logs
+  error       String?
+  triggeredBy String? // userId or 'webhook' or 'scheduled'
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("workflow_executions")
+}
+
+model WebhookTrigger {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  workflowId    String
+  name          String
+  url           String    @unique // Generated webhook URL
+  secret        String // Secret for signature verification
+  active        Boolean   @default(true)
+  lastTriggered DateTime?
+  triggerCount  Int       @default(0)
+  createdBy     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([workspaceId])
+  @@index([workflowId])
+  @@index([active])
+  @@map("webhook_triggers")
+}

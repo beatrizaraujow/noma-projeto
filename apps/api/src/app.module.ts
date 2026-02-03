@@ -21,6 +21,7 @@ import { SavedFiltersModule } from './modules/saved-filters/saved-filters.module
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AIModule } from './modules/ai/ai.module';
 import { AutomationModule } from './modules/automation/automation.module';
+import { WorkflowModule } from './modules/workflow/workflow.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { AutomationModule } from './modules/automation/automation.module';
     AnalyticsModule,
     AIModule,
     AutomationModule,
+    WorkflowModule,
     WebsocketModule,
   ],
   controllers: [AppController],
