@@ -491,3 +491,215 @@ model WebhookTrigger {
   @@index([active])
   @@map("webhook_triggers")
 }
+
+// ==================== INTEGRATIONS ====================
+
+model Integration {
+  id          String   @id @default(cuid())
+  workspaceId String
+  type        String // 'slack', 'discord', 'email', 'google_calendar', 'outlook_calendar'
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  config      Json // Integration-specific configuration (webhook URL, tokens, etc.)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs IntegrationLog[]
+
+  @@unique([workspaceId, type, name])
+  @@index([workspaceId])
+  @@index([type])
+  @@index([active])
+  @@map("integrations")
+}
+
+model IntegrationLog {
+  id            String   @id @default(cuid())
+  integrationId String
+  action        String // 'notification_sent', 'task_created', 'calendar_synced', 'error'
+  status        String // 'success', 'error', 'pending'
+  message       String?
+  metadata      Json? // Additional data
+  createdAt     DateTime @default(now())
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("integration_logs")
+}
+
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  workspaceId String
+  taskId      String?
+  userId      String
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  provider    String // 'google', 'outlook', 'internal'
+  externalId  String? // ID from external calendar provider
+  metadata    Json? // Provider-specific data
+  synced      Boolean   @default(false)
+  syncedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([provider, externalId])
+  @@index([workspaceId])
+  @@index([taskId])
+  @@index([userId])
+  @@index([startDate])
+  @@index([provider])
+  @@map("calendar_events")
+}
+
+model EmailInbox {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  projectId      String? // If null, goes to default project
+  email          String // Email address to receive at (e.g., project+abc123@tasks.noma.com)
+  provider       String    @default("internal") // 'internal', 'gmail', 'outlook'
+  config         Json? // IMAP/SMTP configuration for external providers
+  autoCreateTask Boolean   @default(true)
+  active         Boolean   @default(true)
+  lastSyncedAt   DateTime?
+  createdBy      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([email])
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([active])
+  @@map("email_inboxes")
+}
+
+model GitHubPullRequest {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  taskId       String?
+  repository   String // owner/repo
+  prNumber     Int
+  prTitle      String
+  prUrl        String
+  prState      String // 'open', 'closed', 'merged'
+  prAuthor     String
+  prBranch     String
+  prCreatedAt  DateTime
+  prUpdatedAt  DateTime
+  prMergedAt   DateTime?
+  synced       Boolean  @default(true)
+  syncedAt     DateTime @default(now())
+  metadata     Json? // Additional PR data (labels, assignees, etc.)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([repository, prNumber])
+  @@index([workspaceId])
+  @@index([taskId])
+  @@index([repository])
+  @@index([prState])
+  @@map("github_pull_requests")
+}
+
+model FigmaFile {
+  id          String   @id @default(cuid())
+  workspaceId String
+  projectId   String?
+  taskId      String?
+  fileKey     String // Figma file key
+  fileName    String
+  fileUrl     String
+  embedUrl    String // Embed URL for iframe
+  thumbnail   String?
+  version     String? // Version ID
+  lastSynced  DateTime @default(now())
+  metadata    Json? // Additional file data
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([fileKey])
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([taskId])
+  @@map("figma_files")
+}
+
+model CloudFile {
+  id          String    @id @default(cuid())
+  workspaceId String
+  projectId   String?
+  taskId      String?
+  provider    String // 'google_drive', 'dropbox'
+  fileId      String // Provider's file ID
+  fileName    String
+  fileType    String // MIME type
+  fileUrl     String // Direct link to file
+  thumbnailUrl String?
+  fileSize    Int? // Size in bytes
+  sharedLink  String? // Public share link
+  synced      Boolean   @default(true)
+  syncedAt    DateTime  @default(now())
+  metadata    Json? // Provider-specific metadata
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([provider, fileId])
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([taskId])
+  @@index([provider])
+  @@map("cloud_files")
+}
+
+model WebhookEndpoint {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  provider    String // 'zapier', 'make', 'custom'
+  url         String // Unique webhook URL
+  secret      String? // HMAC secret for verification
+  active      Boolean  @default(true)
+  events      Json // Array of event types to trigger on
+  config      Json? // Provider-specific configuration
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  calls WebhookCall[]
+
+  @@unique([url])
+  @@index([workspaceId])
+  @@index([provider])
+  @@index([active])
+  @@map("webhook_endpoints")
+}
+
+model WebhookCall {
+  id         String   @id @default(cuid())
+  endpointId String
+  event      String // Event type that triggered the webhook
+  payload    Json // Request payload
+  response   Json? // Response from the webhook
+  status     String // 'success', 'error', 'pending'
+  statusCode Int?
+  error      String?
+  retries    Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("webhook_calls")
+}

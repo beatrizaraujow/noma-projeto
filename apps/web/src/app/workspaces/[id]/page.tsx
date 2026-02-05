@@ -179,7 +179,7 @@ export default function WorkspaceDetailPage() {
             <span>{workspace._count.projects} projetos</span>
             <span>{workspace._count.members} membros</span>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex gap-3">
             <button
               onClick={() => router.push(`/workspaces/${params.id}/dashboard`)}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm inline-flex items-center gap-2"
@@ -198,6 +198,23 @@ export default function WorkspaceDetailPage() {
                 <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
               Ver Dashboard & Analytics
+            </button>
+            <button
+              onClick={() => router.push(`/workspaces/${params.id}/integrations`)}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm inline-flex items-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              Integrações
             </button>
           </div>
         </div>

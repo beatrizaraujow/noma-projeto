@@ -3,7 +3,51 @@
 <div align="center">
   <h3>🚀 Gerenciamento avançado de projetos e tarefas com colaboração em tempo real</h3>
   <p>Next.js 14+ • NestJS • TypeScript • PostgreSQL • MongoDB • Redis • Elasticsearch</p>
+  
+  <br />
+  
+  [![Deploy Guide](https://img.shields.io/badge/📖_Deploy_Guide-Click_Here-blue)](README_DEPLOY.md)
+  [![Study Deployment](https://img.shields.io/badge/🎓_Study_Deploy-Safe-green)](DEPLOY_STUDY.md)
+  [![Security](https://img.shields.io/badge/🔒_Security-Important-red)](SECURITY_DEPLOY.md)
 </div>
+
+---
+
+## ⚡ Quick Start (Demo/Study)
+
+```bash
+# 1. Clone e instale
+git clone https://github.com/beatrizaraujow/noma-projeto.git
+cd noma-projeto
+pnpm install
+
+# 2. Configure ambiente (IMPORTANTE!)
+cp .env.example .env
+# Edite .env com suas configurações
+
+# 3. Setup banco de dados
+cd packages/database
+npx prisma migrate dev
+npx prisma db seed
+
+# 4. Rode em desenvolvimento
+cd ../..
+pnpm dev
+```
+
+**🌐 Acesse:** 
+- Frontend: http://localhost:3000
+- API: http://localhost:3001
+
+**⚠️ Este é um projeto de ESTUDO/DEMO**
+- Use apenas dados FAKE para demonstração
+- Configure secrets no provedor de deploy (não no código)
+- Leia [SECURITY_DEPLOY.md](SECURITY_DEPLOY.md) antes de fazer deploy público
+
+📖 **Guias de Deploy:**
+- [🚀 Quick Deploy](README_DEPLOY.md) - Deploy em 2-5 minutos
+- [🎓 Study Deployment](DEPLOY_STUDY.md) - Guia completo e seguro
+- [🔒 Security Guide](SECURITY_DEPLOY.md) - Boas práticas
 
 ---
 

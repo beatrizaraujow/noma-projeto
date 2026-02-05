@@ -52,6 +52,20 @@ next-env.d.ts
 # Database
 *.db
 *.db-journal
+uploads/
+
+# Docker volumes
+postgres_data/
+mongodb_data/
+redis_data/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Database
+*.db
+*.db-journal
 
 # Docker
 docker-data/

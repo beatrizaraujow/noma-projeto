@@ -1,3 +1,6 @@
+// Design System Tokens
+export * from './design-tokens';
+
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001',
@@ -5,7 +8,7 @@ export const API_CONFIG = {
 };
 
 export const APP_CONFIG = {
-  NAME: 'NexORA',
+  NAME: 'NOMA',
   DESCRIPTION: 'Enterprise Task Management Platform',
   VERSION: '1.0.0',
 };
