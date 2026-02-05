@@ -185,5 +185,68 @@ export type {
 } from './components/kanban-board';
 export type { BoardView, BoardFilter } from './components/board-header';
 
+// Organisms - Task Detail & Comments
+export {
+  TaskDetailHeader,
+  TaskMetadataSidebar,
+  TaskActivityTimeline,
+} from './components/task-detail';
+export type {
+  TaskMetadata,
+  TaskActivity,
+} from './components/task-detail';
+
+export {
+  TaskComments,
+  TaskComment,
+  TaskCommentInput,
+} from './components/task-comments';
+export type {
+  Comment,
+  User,
+} from './components/task-comments';
+
+export {
+  TaskAttachments,
+  TaskAttachmentItem,
+  TaskAttachmentUpload,
+} from './components/task-attachments';
+export type {
+  Attachment,
+} from './components/task-attachments';
+
+export { RichTextEditor } from './components/rich-text-editor';
+export { TaskDetailPanel } from './components/task-detail-panel';
+export type { Task } from './components/task-detail-panel';
+
+// View Components
+export { ViewSwitcher } from './components/view-switcher';
+export type { ViewSwitcherProps, ViewType } from './components/view-switcher';
+
+export { TaskListView } from './components/task-list-view';
+export type { TaskListViewProps, TaskListItem, SortField, SortDirection } from './components/task-list-view';
+
+export { TaskCalendarView } from './components/task-calendar-view';
+export type { TaskCalendarViewProps, CalendarTask } from './components/task-calendar-view';
+
+export { TaskTimelineView } from './components/task-timeline-view';
+export type { TaskTimelineViewProps, TimelineTask } from './components/task-timeline-view';
+
+// Real-time Collaboration Components
+export { PresenceAvatars } from './components/presence-avatars';
+export type { PresenceAvatarsProps, PresenceUser } from './components/presence-avatars';
+
+export { CursorTracker } from './components/cursor-tracker';
+export type { CursorTrackerProps, RemoteCursor } from './components/cursor-tracker';
+
+export { ToastContainer, ToastItem, useToast } from './components/toast';
+export type { ToastContainerProps, ToastProps, Toast, ToastType } from './components/toast';
+
+export { TypingIndicator } from './components/typing-indicator';
+export type { TypingIndicatorProps, TypingUser } from './components/typing-indicator';
+
+export { PulseOverlay, usePulse } from './components/pulse-overlay';
+export type { PulseOverlayProps } from './components/pulse-overlay';
+
 // Utilities
 export { cn } from './lib/utils';

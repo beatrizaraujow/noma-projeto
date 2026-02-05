@@ -13,6 +13,7 @@ import { cn } from '../lib/utils';
 import { Avatar } from './avatar';
 import { Badge } from './badge';
 import { Button } from './button';
+import { PulseOverlay } from './pulse-overlay';
 
 export interface KanbanTask {
   id: string;
@@ -38,11 +39,12 @@ export interface KanbanCardProps {
   task: KanbanTask;
   onClick?: () => void;
   isDragging?: boolean;
+  showPulse?: boolean;
   className?: string;
 }
 
 export const KanbanCard = React.forwardRef<HTMLDivElement, KanbanCardProps>(
-  ({ task, onClick, isDragging = false, className, ...props }, ref) => {
+  ({ task, onClick, isDragging = false, showPulse = false, className, ...props }, ref) => {
     const priorityConfig = {
       low: { icon: Flag, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
       medium: { icon: Flag, color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
@@ -58,22 +60,23 @@ export const KanbanCard = React.forwardRef<HTMLDivElement, KanbanCardProps>(
     const isDueSoon = task.dueDate && new Date(task.dueDate) < new Date(Date.now() + 86400000 * 3); // 3 days
 
     return (
-      <div
-        ref={ref}
-        onClick={onClick}
-        className={cn(
-          'group relative bg-white dark:bg-neutral-800',
-          'border border-neutral-200 dark:border-neutral-700',
-          'rounded-lg p-3',
-          'cursor-pointer',
-          'transition-all duration-200',
-          isDragging
-            ? 'opacity-50 shadow-2xl rotate-2 scale-105'
-            : 'hover:shadow-md hover:border-orange-300 dark:hover:border-orange-600',
-          className
-        )}
-        {...props}
-      >
+      <PulseOverlay show={showPulse} color="orange" intensity="medium" duration={2000}>
+        <div
+          ref={ref}
+          onClick={onClick}
+          className={cn(
+            'group relative bg-white dark:bg-neutral-800',
+            'border border-neutral-200 dark:border-neutral-700',
+            'rounded-lg p-3',
+            'cursor-pointer',
+            'transition-all duration-200',
+            isDragging
+              ? 'opacity-50 shadow-2xl rotate-2 scale-105'
+              : 'hover:shadow-md hover:border-orange-300 dark:hover:border-orange-600',
+            className
+          )}
+          {...props}
+        >
         {/* Priority indicator - Left border */}
         {priority && (
           <div
@@ -180,6 +183,7 @@ export const KanbanCard = React.forwardRef<HTMLDivElement, KanbanCardProps>(
           </button>
         </div>
       </div>
+      </PulseOverlay>
     );
   }
 );
