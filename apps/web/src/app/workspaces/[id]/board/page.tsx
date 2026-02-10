@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   KanbanBoard,
   KanbanTask,
@@ -25,8 +26,10 @@ import {
   ToastContainer,
   useToast,
   usePulse,
+  NotificationCenter,
+  Notification,
+  NotificationFilter,
 } from '@nexora/ui';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 // Mock data
 const mockColumns: KanbanColumnType[] = [
@@ -253,6 +256,80 @@ export default function BoardPage() {
   const [typingUsers, setTypingUsers] = React.useState<Array<{ id: string; name: string; avatar?: string }>>([]);
   const { toasts, removeToast, success, info } = useToast();
   const { trigger: triggerPulse, isPulsing } = usePulse();
+
+  // Notifications state
+  const [notifications, setNotifications] = React.useState<Notification[]>([
+    {
+      id: 'n1',
+      type: 'assigned',
+      title: 'New task assigned',
+      message: 'You were assigned to "Design new dashboard layout"',
+      actor: { name: 'Bob Smith', avatar: undefined },
+      timestamp: new Date(Date.now() - 300000), // 5m ago
+      read: false,
+      metadata: { taskId: '3', taskTitle: 'Design new dashboard layout' },
+    },
+    {
+      id: 'n2',
+      type: 'mention',
+      title: 'You were mentioned',
+      message: '@you What do you think about this approach?',
+      actor: { name: 'Jane Smith', avatar: undefined },
+      timestamp: new Date(Date.now() - 1800000), // 30m ago
+      read: false,
+      metadata: { taskId: '6', taskTitle: 'Refactor authentication module' },
+    },
+    {
+      id: 'n3',
+      type: 'comment',
+      title: 'New comment',
+      message: 'Alice commented on your task',
+      actor: { name: 'Alice Johnson', avatar: undefined },
+      timestamp: new Date(Date.now() - 3600000), // 1h ago
+      read: true,
+      metadata: { taskId: '4', taskTitle: 'Implement user profile page' },
+    },
+    {
+      id: 'n4',
+      type: 'due',
+      title: 'Task due soon',
+      message: 'Implement user profile page is due tomorrow',
+      timestamp: new Date(Date.now() - 7200000), // 2h ago
+      read: true,
+      metadata: { taskId: '4', taskTitle: 'Implement user profile page' },
+    },
+  ]);
+  const [notificationFilter, setNotificationFilter] = React.useState<NotificationFilter>('all');
+  
+  const unreadCount = React.useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
+
+  const handleNotificationClick = (notification: Notification) => {
+    console.log('Notification clicked:', notification);
+    // TODO: Navigate to task or relevant page
+    if (notification.metadata?.taskId) {
+      // Find and open the task
+      info('Opening task', notification.metadata.taskTitle || 'Task');
+    }
+  };
+
+  const handleMarkAsRead = (notificationId: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    success('All notifications marked as read');
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+    info('All notifications cleared');
+  };
 
   const handleTaskClick = (task: KanbanTask) => {
     console.log('Task clicked:', task);
@@ -485,38 +562,151 @@ export default function BoardPage() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  return (
-    <WorkspaceLayout workspaceId={params.id as string}>
-      <div className="h-full flex flex-col">
-        {/* Toasts */}
-        <ToastContainer toasts={toasts} onRemove={removeToast} position="top-right" />
-        
-        {/* Cursor tracker (optional) */}
-        <CursorTracker cursors={remoteCursors} />
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
+  return (
+    <div className="flex h-screen bg-[#0f0f0f]">
+      {/* Toasts */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} position="top-right" />
+      
+      {/* Cursor tracker (optional) */}
+      <CursorTracker cursors={remoteCursors} />
+
+      {/* Sidebar */}
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#1a1a1a] border-r border-gray-800 transition-all duration-300 flex flex-col`}>
+        <div className="p-4 border-b border-gray-800">
+          <Link href="/workspaces">
+            <span className="text-2xl font-bold text-white">
+              <span className="text-orange-500">/</span>noma
+            </span>
+          </Link>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-2">
+          <button 
+            onClick={() => router.push(`/workspaces/${params.id}`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 rounded-lg hover:bg-[#2a2a2a] hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" strokeWidth="2"/>
+              <rect x="14" y="3" width="7" height="7" strokeWidth="2"/>
+              <rect x="14" y="14" width="7" height="7" strokeWidth="2"/>
+              <rect x="3" y="14" width="7" height="7" strokeWidth="2"/>
+            </svg>
+            {sidebarOpen && <span className="font-medium">Painel</span>}
+          </button>
+
+          <button 
+            onClick={() => router.push(`/workspaces/${params.id}/analytics`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 rounded-lg hover:bg-[#2a2a2a] hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            {sidebarOpen && <span className="font-medium">Análises</span>}
+          </button>
+
+          <button 
+            onClick={() => router.push(`/workspaces/${params.id}/projects`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 rounded-lg hover:bg-[#2a2a2a] hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+            {sidebarOpen && <span className="font-medium">Projetos</span>}
+          </button>
+
+          <button 
+            onClick={() => router.push(`/workspaces/${params.id}/invoices`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 rounded-lg hover:bg-[#2a2a2a] hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {sidebarOpen && <span className="font-medium">Faturas</span>}
+          </button>
+
+          <button 
+            onClick={() => router.push(`/workspaces/${params.id}/recurring`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 rounded-lg hover:bg-[#2a2a2a] hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {sidebarOpen && <span className="font-medium">Recorrente</span>}
+          </button>
+
+          <button 
+            onClick={() => router.push(`/workspaces/${params.id}/reports`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 rounded-lg hover:bg-[#2a2a2a] hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {sidebarOpen && <span className="font-medium">Relatórios</span>}
+          </button>
+
+          <button 
+            onClick={() => router.push(`/workspaces/${params.id}/feedback`)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 rounded-lg hover:bg-[#2a2a2a] hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            {sidebarOpen && <span className="font-medium">Feedback</span>}
+          </button>
+        </nav>
+
+        <div className="p-4 m-4 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl">
+          <h3 className="text-white font-bold mb-1">Upgrade Pro!</h3>
+          <p className="text-white/80 text-xs mb-3">Maior produtividade com melhores recursos</p>
+          <button className="w-full px-4 py-2 bg-white text-orange-600 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors">
+            Fazer Upgrade
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header with view switcher and presence */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+        <div className="flex items-center justify-between px-6 py-4 bg-[#1a1a1a] border-b border-gray-800">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-              Project Board
+            <h1 className="text-2xl font-bold text-white">
+              Quadro de Tarefas
             </h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Manage tasks and track progress
+            <p className="text-sm text-gray-400">
+              Gerencie tarefas e acompanhe o progresso
             </p>
           </div>
           
           <div className="flex items-center gap-4">
+            <NotificationCenter
+              notifications={notifications}
+              unreadCount={unreadCount}
+              filter={notificationFilter}
+              onFilterChange={setNotificationFilter}
+              onNotificationClick={handleNotificationClick}
+              onMarkAsRead={handleMarkAsRead}
+              onMarkAllAsRead={handleMarkAllAsRead}
+              onClearAll={handleClearAll}
+            />
             <PresenceAvatars users={presenceUsers} max={3} />
             <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+            <button 
+              onClick={() => router.push('/workspaces')}
+              className="p-2 bg-[#2a2a2a] text-white rounded-lg hover:bg-[#333] transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* View content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden bg-[#0f0f0f]">
           {currentView === 'board' && (
             <KanbanBoard
-              title="Project Board"
-              description="Manage tasks and track progress"
               columns={columns}
               onTaskClick={handleTaskClick}
               onTaskMove={handleTaskMove}
@@ -695,6 +885,6 @@ export default function BoardPage() {
           />
         )}
       </div>
-    </WorkspaceLayout>
+    </div>
   );
 }

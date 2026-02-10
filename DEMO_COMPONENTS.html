@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexORA - Team & Settings Components Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        orange: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#FF5722',
+                            600: '#ea580c',
+                            950: '#7c2d12'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .component-section { margin-bottom: 3rem; padding: 2rem; background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .component-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #FF5722; }
+        .feature-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .feature-card { padding: 1rem; background: #f9fafb; border-radius: 0.5rem; border-left: 3px solid #FF5722; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold mb-4" style="color: #FF5722;">🚀 NexORA Platform</h1>
+            <p class="text-2xl text-gray-600 mb-2">Team & Settings Components</p>
+            <p class="text-lg text-gray-500">Sistema completo de gerenciamento de equipe e configurações</p>
+            <div class="mt-6 inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                <span class="font-semibold">4 Componentes Implementados</span>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div class="bg-white p-6 rounded-lg shadow text-center">
+                <div class="text-4xl font-bold text-purple-600">287</div>
+                <div class="text-gray-600 mt-2">Linhas - TeamMembersGrid</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow text-center">
+                <div class="text-4xl font-bold text-blue-600">242</div>
+                <div class="text-gray-600 mt-2">Linhas - InviteMemberModal</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow text-center">
+                <div class="text-4xl font-bold text-green-600">638</div>
+                <div class="text-gray-600 mt-2">Linhas - UserSettingsPanel</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow text-center">
+                <div class="text-4xl font-bold text-orange-600">613</div>
+                <div class="text-gray-600 mt-2">Linhas - WorkspaceSettings</div>
+            </div>
+        </div>
+
+        <!-- Component 1: TeamMembersGrid -->
+        <div class="component-section">
+            <h2 class="component-title">1. TeamMembersGrid</h2>
+            <p class="text-gray-700 mb-4">Grade responsiva de membros da equipe com badges de função e ações.</p>
+            
+            <div class="feature-list">
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">👑 4 Roles</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Owner (Roxo)</li>
+                        <li>• Admin (Azul)</li>
+                        <li>• Member (Verde)</li>
+                        <li>• Guest (Cinza)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">🔄 Status</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Active</li>
+                        <li>• Pending</li>
+                        <li>• Invited</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">⚙️ Ações</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Editar membro</li>
+                        <li>• Remover membro</li>
+                        <li>• Mudar role</li>
+                        <li>• Reenviar convite</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">🔐 Permissões</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Owner não pode ser editado</li>
+                        <li>• Usuário não edita a si mesmo</li>
+                        <li>• Admin só edita member/guest</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="font-mono text-sm text-gray-700">
+                    <div class="text-orange-600 font-semibold mb-2">📁 Localização:</div>
+                    packages/ui/components/team-members.tsx
+                </div>
+            </div>
+        </div>
+
+        <!-- Component 2: InviteMemberModal -->
+        <div class="component-section">
+            <h2 class="component-title">2. InviteMemberModal</h2>
+            <p class="text-gray-700 mb-4">Modal para convidar novos membros via email com seleção de função.</p>
+            
+            <div class="feature-list">
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">📧 Multi-Email</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Input múltiplos emails</li>
+                        <li>• Validação regex</li>
+                        <li>• Detecção de duplicados</li>
+                        <li>• Enter para adicionar</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">🎭 Roles</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Admin</li>
+                        <li>• Member</li>
+                        <li>• Guest</li>
+                        <li>• Descrições incluídas</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">🔗 Link Sharing</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Link de convite</li>
+                        <li>• Copiar para clipboard</li>
+                        <li>• Feedback "Copied!"</li>
+                        <li>• Timeout 2 segundos</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="font-semibold text-gray-900 mb-2">💬 Mensagem</div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Mensagem customizada</li>
+                        <li>• Textarea 3 linhas</li>
+                        <li>• Campo opcional</li>
+                        <li>• Auto-reset ao fechar</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="font-mono text-sm text-gray-700">
+                    <div class="text-orange-600 font-semibold mb-2">📁 Localização:</div>
+                    packages/ui/components/invite-member-modal.tsx
+                </div>
+            </div>
+        </div>
+
+        <!-- Component 3: UserSettingsPanel -->
+        <div class="component-section">
+            <h2 class="component-title">3. UserSettingsPanel</h2>
+            <p class="text-gray-700 mb-4">Configurações pessoais do usuário com 3 tabs completas.</p>
+            
+            <div class="space-y-6">
+                <!-- Profile Tab -->
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-blue-900 mb-3">📝 Tab: Profile</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <div class="font-semibold text-blue-800 text-sm mb-2">Informações Básicas</div>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li>✓ Avatar upload</li>
+                                <li>✓ Nome completo</li>
+                                <li>✓ Email</li>
+                                <li>✓ Cargo (Job Title)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-blue-800 text-sm mb-2">Detalhes</div>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li>✓ Localização</li>
+                                <li>✓ Bio (4 linhas)</li>
+                                <li>✓ Preview avatar</li>
+                                <li>✓ Validação 2MB</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-blue-800 text-sm mb-2">Feedback</div>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li>✓ Loading states</li>
+                                <li>✓ Saved! feedback</li>
+                                <li>✓ Error handling</li>
+                                <li>✓ Auto-save</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences Tab -->
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-green-900 mb-3">⚙️ Tab: Preferences</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <div class="font-semibold text-green-800 text-sm mb-2">Tema</div>
+                            <ul class="text-sm text-green-700 space-y-1">
+                                <li>✓ Light</li>
+                                <li>✓ Dark</li>
+                                <li>✓ System</li>
+                                <li>✓ Ícones visuais</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-green-800 text-sm mb-2">Notificações Email</div>
+                            <ul class="text-sm text-green-700 space-y-1">
+                                <li>✓ Mentions</li>
+                                <li>✓ Assigned tasks</li>
+                                <li>✓ Updates</li>
+                                <li>✓ Marketing</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-green-800 text-sm mb-2">Push Notifications</div>
+                            <ul class="text-sm text-green-700 space-y-1">
+                                <li>✓ Enable/Disable</li>
+                                <li>✓ Mentions</li>
+                                <li>✓ Assigned tasks</li>
+                                <li>✓ Conditional toggles</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-red-900 mb-3">🔒 Tab: Security</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <div class="font-semibold text-red-800 text-sm mb-2">Senha</div>
+                            <ul class="text-sm text-red-700 space-y-1">
+                                <li>✓ Senha atual</li>
+                                <li>✓ Nova senha</li>
+                                <li>✓ Confirmar senha</li>
+                                <li>✓ Show/Hide toggle</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-red-800 text-sm mb-2">Validação</div>
+                            <ul class="text-sm text-red-700 space-y-1">
+                                <li>✓ Mínimo 8 caracteres</li>
+                                <li>✓ Senhas match</li>
+                                <li>✓ Última alteração</li>
+                                <li>✓ Feedback visual</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-red-800 text-sm mb-2">2FA</div>
+                            <ul class="text-sm text-red-700 space-y-1">
+                                <li>✓ Enable/Disable</li>
+                                <li>✓ Badge status</li>
+                                <li>✓ QR Code setup</li>
+                                <li>✓ Async handling</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="font-mono text-sm text-gray-700">
+                    <div class="text-orange-600 font-semibold mb-2">📁 Localização:</div>
+                    packages/ui/components/user-settings.tsx
+                </div>
+            </div>
+        </div>
+
+        <!-- Component 4: WorkspaceSettingsPanel -->
+        <div class="component-section">
+            <h2 class="component-title">4. WorkspaceSettingsPanel</h2>
+            <p class="text-gray-700 mb-4">Configurações do workspace com General, Billing e Danger Zone.</p>
+            
+            <div class="space-y-6">
+                <!-- General Tab -->
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-purple-900 mb-3">🏢 Tab: General</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <div class="font-semibold text-purple-800 text-sm mb-2">Identidade</div>
+                            <ul class="text-sm text-purple-700 space-y-1">
+                                <li>✓ Logo upload</li>
+                                <li>✓ Nome workspace</li>
+                                <li>✓ Descrição</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-purple-800 text-sm mb-2">View Padrão</div>
+                            <ul class="text-sm text-purple-700 space-y-1">
+                                <li>✓ Board</li>
+                                <li>✓ List</li>
+                                <li>✓ Calendar</li>
+                                <li>✓ Timeline</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-purple-800 text-sm mb-2">Upload</div>
+                            <ul class="text-sm text-purple-700 space-y-1">
+                                <li>✓ Imagem quadrada</li>
+                                <li>✓ Max 2MB</li>
+                                <li>✓ Preview</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-purple-800 text-sm mb-2">Ícones</div>
+                            <ul class="text-sm text-purple-700 space-y-1">
+                                <li>✓ Board grid</li>
+                                <li>✓ List bars</li>
+                                <li>✓ Calendar</li>
+                                <li>✓ Timeline</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Billing Tab -->
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-900 mb-3">💳 Tab: Billing & Usage</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <div class="font-semibold text-yellow-800 text-sm mb-2">Planos</div>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li>✓ Free (badge)</li>
+                                <li>✓ Pro (badge success)</li>
+                                <li>✓ Enterprise (badge primary)</li>
+                                <li>✓ Upgrade CTA</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-yellow-800 text-sm mb-2">Stats: Members</div>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li>✓ Contagem atual</li>
+                                <li>✓ Ícone Users azul</li>
+                                <li>✓ Limite por plano</li>
+                                <li>✓ Card com bg</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-yellow-800 text-sm mb-2">Stats: Projects</div>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li>✓ Total projetos</li>
+                                <li>✓ Ícone Folder verde</li>
+                                <li>✓ Limite por plano</li>
+                                <li>✓ Unlimited pro+</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-yellow-800 text-sm mb-2">Stats: Storage</div>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li>✓ GB usado/limite</li>
+                                <li>✓ Progress bar</li>
+                                <li>✓ Cores: verde/laranja/vermelho</li>
+                                <li>✓ % visualização</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-yellow-200">
+                        <div class="font-semibold text-yellow-800 mb-2">Billing History Table</div>
+                        <div class="grid grid-cols-4 gap-2 text-sm text-yellow-700">
+                            <div>✓ Data</div>
+                            <div>✓ Valor</div>
+                            <div>✓ Status (paid/pending/failed)</div>
+                            <div>✓ Invoice link</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone Tab -->
+                <div class="bg-red-50 p-4 rounded-lg border-2 border-red-200">
+                    <h3 class="font-bold text-red-900 mb-3">⚠️ Tab: Danger Zone</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <div class="font-semibold text-red-800 text-sm mb-2">Delete Workspace</div>
+                            <ul class="text-sm text-red-700 space-y-1">
+                                <li>✓ Warning banner</li>
+                                <li>✓ AlertTriangle ícone</li>
+                                <li>✓ Lista de consequências</li>
+                                <li>✓ Irreversível aviso</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-red-800 text-sm mb-2">Confirmação</div>
+                            <ul class="text-sm text-red-700 space-y-1">
+                                <li>✓ Digitar nome workspace</li>
+                                <li>✓ Validação match</li>
+                                <li>✓ Botão danger</li>
+                                <li>✓ Loading state</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-red-800 text-sm mb-2">Permissões</div>
+                            <ul class="text-sm text-red-700 space-y-1">
+                                <li>✓ Somente Owner</li>
+                                <li>✓ Disabled outros</li>
+                                <li>✓ Mensagem explicativa</li>
+                                <li>✓ Cancel button</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="font-mono text-sm text-gray-700">
+                    <div class="text-orange-600 font-semibold mb-2">📁 Localização:</div>
+                    packages/ui/components/workspace-settings.tsx
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Section -->
+        <div class="component-section bg-orange-50 border-2 border-orange-200">
+            <h2 class="component-title">📚 Documentação Completa</h2>
+            <p class="text-gray-700 mb-6">Guia completo com exemplos de código, APIs e integrações.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-900 mb-3">Conteúdo Principal</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li>✓ API completa dos 4 componentes</li>
+                        <li>✓ Exemplos de código TypeScript</li>
+                        <li>✓ Props tables detalhadas</li>
+                        <li>✓ Tipos e interfaces</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-900 mb-3">Integrações</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li>✓ Backend API endpoints</li>
+                        <li>✓ WebSocket real-time patterns</li>
+                        <li>✓ Role-Based Access Control (RBAC)</li>
+                        <li>✓ Permission matrix</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-900 mb-3">Qualidade</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li>✓ Unit test examples</li>
+                        <li>✓ Integration test patterns</li>
+                        <li>✓ Accessibility (WCAG 2.1 AA)</li>
+                        <li>✓ Responsive design breakpoints</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-900 mb-3">Recursos</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li>✓ Styling & theming guide</li>
+                        <li>✓ Dark mode support</li>
+                        <li>✓ Custom styling examples</li>
+                        <li>✓ Complete working example</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-white p-4 rounded-lg border border-orange-300">
+                <div class="font-mono text-sm">
+                    <div class="text-orange-600 font-semibold mb-2">📄 Arquivo:</div>
+                    <div class="text-gray-700">docs/TEAM_SETTINGS.md</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="component-section bg-gradient-to-r from-purple-50 to-blue-50">
+            <h2 class="component-title">📤 Exports do Package</h2>
+            <p class="text-gray-700 mb-4">Todos os componentes exportados em <code class="bg-white px-2 py-1 rounded">@nexora/ui</code></p>
+            
+            <div class="bg-gray-900 text-green-400 p-6 rounded-lg font-mono text-sm overflow-x-auto">
+                <div class="mb-4">// Team & Settings Components</div>
+                <div>export { TeamMembersGrid } from './components/team-members';</div>
+                <div class="text-gray-500">export type { TeamMembersGridProps, TeamMember, MemberRole, MemberStatus };</div>
+                <div class="mt-4">export { InviteMemberModal } from './components/invite-member-modal';</div>
+                <div class="text-gray-500">export type { InviteMemberModalProps, InviteRole };</div>
+                <div class="mt-4">export { UserSettingsPanel } from './components/user-settings';</div>
+                <div class="text-gray-500">export type { UserSettingsPanelProps, UserProfile, UserPreferences, UserSecurity, SettingsTab, ThemeMode };</div>
+                <div class="mt-4">export { WorkspaceSettingsPanel } from './components/workspace-settings';</div>
+                <div class="text-gray-500">export type { WorkspaceSettingsPanelProps, WorkspaceGeneral, BillingInfo, BillingHistory, WorkspaceSettingsTab, PlanType, DefaultView };</div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="text-center py-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">✨ Sistema Completo Implementado!</h2>
+            <p class="text-xl text-gray-600 mb-6">1.780 linhas de código TypeScript + React</p>
+            <div class="flex justify-center gap-4 flex-wrap">
+                <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-full font-semibold">TypeScript First</span>
+                <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-semibold">Dark Mode ✓</span>
+                <span class="bg-green-100 text-green-800 px-4 py-2 rounded-full font-semibold">Responsive ✓</span>
+                <span class="bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-semibold">RBAC ✓</span>
+                <span class="bg-pink-100 text-pink-800 px-4 py-2 rounded-full font-semibold">Accessible (WCAG AA) ✓</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🚀 NexORA - Team & Settings Components Demo');
+        console.log('✅ 4 componentes implementados');
+        console.log('📦 Todos exportados em @nexora/ui');
+        console.log('📚 Documentação completa em docs/TEAM_SETTINGS.md');
+    </script>
+</body>
+</html>

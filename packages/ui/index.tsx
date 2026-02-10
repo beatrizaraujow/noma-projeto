@@ -248,5 +248,71 @@ export type { TypingIndicatorProps, TypingUser } from './components/typing-indic
 export { PulseOverlay, usePulse } from './components/pulse-overlay';
 export type { PulseOverlayProps } from './components/pulse-overlay';
 
+// Notifications & Activity Components
+export { NotificationCenter } from './components/notification-center';
+export type { 
+  NotificationCenterProps, 
+  Notification, 
+  NotificationFilter 
+} from './components/notification-center';
+
+export { ActivityFeed } from './components/activity-feed';
+export type { 
+  ActivityFeedProps, 
+  Activity, 
+  ActivityType 
+} from './components/activity-feed';
+
+export { 
+  TaskAssignedEmail,
+  MentionEmail,
+  DueDateReminderEmail,
+  DailyDigestEmail,
+  emailTemplates 
+} from './components/email-templates';
+export type {
+  EmailTemplateProps,
+  TaskAssignedEmailProps,
+  MentionEmailProps,
+  DueDateReminderEmailProps,
+  DailyDigestEmailProps
+} from './components/email-templates';
+
+// Team & Settings Components
+export { TeamMembersGrid } from './components/team-members';
+export type {
+  TeamMembersGridProps,
+  TeamMember,
+  MemberRole,
+  MemberStatus
+} from './components/team-members';
+
+export { InviteMemberModal } from './components/invite-member-modal';
+export type {
+  InviteMemberModalProps,
+  InviteRole
+} from './components/invite-member-modal';
+
+export { UserSettingsPanel } from './components/user-settings';
+export type {
+  UserSettingsPanelProps,
+  UserProfile,
+  UserPreferences,
+  UserSecurity,
+  SettingsTab,
+  ThemeMode
+} from './components/user-settings';
+
+export { WorkspaceSettingsPanel } from './components/workspace-settings';
+export type {
+  WorkspaceSettingsPanelProps,
+  WorkspaceGeneral,
+  BillingInfo,
+  BillingHistory,
+  WorkspaceSettingsTab,
+  PlanType,
+  DefaultView
+} from './components/workspace-settings';
+
 // Utilities
 export { cn } from './lib/utils';

@@ -5,7 +5,16 @@ const nextConfig = {
   
   // Otimizações de imagens
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -120,9 +129,6 @@ const nextConfig = {
     optimizeCss: true,
     optimizePackageImports: ['@nexora/ui', 'lucide-react'],
   },
-  
-  // Production optimizations
-  swcMinify: true,
   
   // Output standalone for Docker
   output: 'standalone',

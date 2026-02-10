@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 import { Providers } from './providers';
@@ -11,13 +11,6 @@ export const metadata: Metadata = {
   title: 'NUMA - Enterprise Task Management',
   description: 'Advanced project and task management platform with real-time collaboration',
   manifest: '/manifest.json',
-  themeColor: '#2563eb',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -27,6 +20,14 @@ export const metadata: Metadata = {
     icon: '/icon-192x192.png',
     apple: '/icon-192x192.png',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#2563eb',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
