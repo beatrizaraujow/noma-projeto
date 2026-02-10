@@ -1,91 +1,91 @@
 # NexORA - Enterprise Task Management Platform
 
 <div align="center">
-  <h3>🚀 Gerenciamento avançado de projetos e tarefas com colaboração em tempo real</h3>
+  <h3>Advanced project and task management with real-time collaboration</h3>
   <p>Next.js 14+ • NestJS • TypeScript • PostgreSQL • MongoDB • Redis • Elasticsearch</p>
   
   <br />
   
-  [![Deploy Guide](https://img.shields.io/badge/📖_Deploy_Guide-Click_Here-blue)](README_DEPLOY.md)
-  [![Study Deployment](https://img.shields.io/badge/🎓_Study_Deploy-Safe-green)](DEPLOY_STUDY.md)
-  [![Security](https://img.shields.io/badge/🔒_Security-Important-red)](SECURITY_DEPLOY.md)
+  [![Deploy Guide](https://img.shields.io/badge/Deploy_Guide-Click_Here-blue)](README_DEPLOY.md)
+  [![Study Deployment](https://img.shields.io/badge/Study_Deploy-Safe-green)](DEPLOY_STUDY.md)
+  [![Security](https://img.shields.io/badge/Security-Important-red)](SECURITY_DEPLOY.md)
 </div>
 
 ---
 
-## ⚡ Quick Start (Demo/Study)
+## Quick Start (Demo/Study)
 
 ```bash
-# 1. Clone e instale
+# 1. Clone and install
 git clone https://github.com/beatrizaraujow/noma-projeto.git
 cd noma-projeto
 pnpm install
 
-# 2. Configure ambiente (IMPORTANTE!)
+# 2. Configure environment (IMPORTANT!)
 cp .env.example .env
-# Edite .env com suas configurações
+# Edit .env with your settings
 
-# 3. Setup banco de dados
+# 3. Setup database
 cd packages/database
 npx prisma migrate dev
 npx prisma db seed
 
-# 4. Rode em desenvolvimento
+# 4. Run in development
 cd ../..
 pnpm dev
 ```
 
-**🌐 Acesse:** 
+**Access:** 
 - Frontend: http://localhost:3000
 - API: http://localhost:3001
 
-**⚠️ Este é um projeto de ESTUDO/DEMO**
-- Use apenas dados FAKE para demonstração
-- Configure secrets no provedor de deploy (não no código)
-- Leia [SECURITY_DEPLOY.md](SECURITY_DEPLOY.md) antes de fazer deploy público
+**WARNING: This is a STUDY/DEMO project**
+- Use only FAKE data for demonstration
+- Configure secrets in deploy provider (not in code)
+- Read [SECURITY_DEPLOY.md](SECURITY_DEPLOY.md) before public deployment
 
-📖 **Guias de Deploy:**
-- [🚀 Quick Deploy](README_DEPLOY.md) - Deploy em 2-5 minutos
-- [🎓 Study Deployment](DEPLOY_STUDY.md) - Guia completo e seguro
-- [🔒 Security Guide](SECURITY_DEPLOY.md) - Boas práticas
+**Deploy Guides:**
+- [Quick Deploy](README_DEPLOY.md) - Deploy in 2-5 minutes
+- [Study Deployment](DEPLOY_STUDY.md) - Complete and safe guide
+- [Security Guide](SECURITY_DEPLOY.md) - Best practices
 
 ---
 
-## 📋 Índice
+## Table of Contents
 
-- [Sobre o Projeto](#sobre-o-projeto)
-- [Tecnologias](#tecnologias)
-- [Arquitetura](#arquitetura)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação](#instalação)
-- [Desenvolvimento](#desenvolvimento)
+- [About the Project](#about-the-project)
+- [Technologies](#technologies)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Development](#development)
 - [Docker](#docker)
-- [Testes](#testes)
+- [Testing](#testing)
 - [Deploy](#deploy)
-- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Project Structure](#project-structure)
 - [Features](#features)
 - [Roadmap](#roadmap)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🎯 Sobre o Projeto
+## About the Project
 
-**NexORA** é uma plataforma enterprise de gerenciamento de tarefas e projetos, similar ao ClickUp e Notion, com recursos avançados de:
+**NexORA** is an enterprise task and project management platform, similar to ClickUp and Notion, with advanced features:
 
-- ✅ **Colaboração em tempo real** com Socket.io
-- 🤖 **Inteligência Artificial** integrada (OpenAI)
-- 📊 **Analytics e métricas** avançadas
-- 🔍 **Busca full-text** com Elasticsearch
-- 🔐 **Autenticação robusta** com NextAuth.js
-- 🎨 **Interface moderna** com Tailwind CSS e Shadcn/ui
-- 📱 **Totalmente responsivo** e otimizado para mobile
-- 🚀 **Performance enterprise** com cache Redis
+- **Real-time Collaboration** with Socket.io
+- **Artificial Intelligence** integration (OpenAI)
+- **Advanced Analytics** and metrics
+- **Full-text Search** with Elasticsearch
+- **Robust Authentication** with NextAuth.js
+- **Modern Interface** with Tailwind CSS and Shadcn/ui
+- **Fully Responsive** and mobile-optimized
+- **Enterprise Performance** with Redis cache
 
 ---
 
-## 🛠 Tecnologias
+## Technologies
 
 ### **Frontend**
 - **Framework:** Next.js 14+ (App Router)
@@ -107,21 +107,21 @@ pnpm dev
 - **Validation:** class-validator + class-transformer
 
 ### **Databases**
-- **PostgreSQL:** Dados relacionais (usuários, projetos, tarefas)
-- **MongoDB:** Dados não estruturados (logs, comentários)
-- **Redis:** Cache, sessões, pub/sub
-- **Elasticsearch:** Busca avançada e full-text search
+- **PostgreSQL:** Relational data (users, projects, tasks)
+- **MongoDB:** Unstructured data (logs, comments)
+- **Redis:** Cache, sessions, pub/sub
+- **Elasticsearch:** Advanced search and full-text search
 
 ### **DevOps & Infrastructure**
-- **Containerização:** Docker + Docker Compose
+- **Containerization:** Docker + Docker Compose
 - **Monorepo:** Turborepo
 - **CI/CD:** GitHub Actions
-- **Testes:** Jest + React Testing Library + Cypress
-- **Documentação:** Swagger/OpenAPI
+- **Testing:** Jest + React Testing Library + Cypress
+- **Documentation:** Swagger/OpenAPI
 
 ---
 
-## 🏗 Arquitetura
+## Architecture
 
 ### **Monorepo Structure**
 
@@ -140,7 +140,7 @@ NexORA/
 └── package.json
 ```
 
-### **Microsserviços Architecture**
+### **Microservices Architecture**
 
 ```
 ┌─────────────┐
@@ -174,35 +174,35 @@ NexORA/
 
 ---
 
-## ⚙️ Pré-requisitos
+## Prerequisites
 
 - **Node.js** >= 18.0.0
-- **pnpm** >= 8.0.0 (recomendado)
-- **Docker** e **Docker Compose** (para databases)
+- **pnpm** >= 8.0.0 (recommended)
+- **Docker** and **Docker Compose** (for databases)
 - **Git**
 
 ---
 
-## 📦 Instalação
+## Installation
 
-### 1. Clone o repositório
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/seu-usuario/nexora.git
+git clone https://github.com/beatrizaraujow/noma-projeto.git
 cd nexora
 ```
 
-### 2. Instale as dependências
+### 2. Install dependencies
 
 ```bash
-# Instalar pnpm globalmente (se não tiver)
+# Install pnpm globally (if you don't have it)
 npm install -g pnpm
 
-# Instalar dependências do projeto
+# Install project dependencies
 pnpm install
 ```
 
-### 3. Configure as variáveis de ambiente
+### 3. Configure environment variables
 
 ```bash
 # Frontend (.env)
@@ -212,24 +212,24 @@ cp apps/web/.env.example apps/web/.env
 cp apps/api/.env.example apps/api/.env
 ```
 
-**Edite os arquivos `.env` com suas configurações.**
+**Edit the `.env` files with your settings.**
 
-### 4. Inicie os serviços com Docker
+### 4. Start services with Docker
 
 ```bash
 docker-compose up -d
 ```
 
-Isso iniciará:
-- PostgreSQL (porta 5432)
-- MongoDB (porta 27017)
-- Redis (porta 6379)
-- Elasticsearch (porta 9200)
-- Kibana (porta 5601) - opcional
-- Redis Commander (porta 8081) - opcional
-- Mongo Express (porta 8082) - opcional
+This will start:
+- PostgreSQL (port 5432)
+- MongoDB (port 27017)
+- Redis (port 6379)
+- Elasticsearch (port 9200)
+- Kibana (port 5601) - optional
+- Redis Commander (port 8081) - optional
+- Mongo Express (port 8082) - optional
 
-### 5. Execute as migrations do banco de dados
+### 5. Run database migrations
 
 ```bash
 cd packages/database
@@ -239,30 +239,30 @@ pnpm db:migrate
 
 ---
 
-## 🚀 Desenvolvimento
+## Development
 
-### Iniciar todos os serviços
+### Start all services
 
 ```bash
 pnpm dev
 ```
 
-Isso iniciará:
+This will start:
 - **Frontend:** http://localhost:3000
 - **Backend:** http://localhost:3001
 - **API Docs:** http://localhost:3001/api/docs
 
-### Iniciar serviços individualmente
+### Start services individually
 
 ```bash
-# Frontend apenas
+# Frontend only
 pnpm dev --filter=@nexora/web
 
-# Backend apenas
+# Backend only
 pnpm dev --filter=@nexora/api
 ```
 
-### Build para produção
+### Build for production
 
 ```bash
 pnpm build
@@ -274,7 +274,7 @@ pnpm build
 pnpm lint
 ```
 
-### Formatar código
+### Format code
 
 ```bash
 pnpm format
@@ -282,35 +282,35 @@ pnpm format
 
 ---
 
-## 🐳 Docker
+## Docker
 
-### Desenvolvimento com Docker
+### Development with Docker
 
 ```bash
-# Iniciar todos os containers
+# Start all containers
 docker-compose up -d
 
-# Ver logs
+# View logs
 docker-compose logs -f
 
-# Parar containers
+# Stop containers
 docker-compose down
 
-# Parar e remover volumes
+# Stop and remove volumes
 docker-compose down -v
 ```
 
-### Build das aplicações
+### Build applications
 
 ```bash
-# Build do frontend
+# Build frontend
 docker build -f apps/web/Dockerfile -t nexora-web .
 
-# Build do backend
+# Build backend
 docker build -f apps/api/Dockerfile -t nexora-api .
 ```
 
-### Acessar ferramentas de administração
+### Access administration tools
 
 - **Kibana (Elasticsearch):** http://localhost:5601
 - **Redis Commander:** http://localhost:8081
@@ -318,12 +318,12 @@ docker build -f apps/api/Dockerfile -t nexora-api .
 
 ---
 
-## 🧪 Testes
+## Testing
 
-### Testes Unitários (Jest)
+### Unit Tests (Jest)
 
 ```bash
-# Todos os testes
+# All tests
 pnpm test
 
 # Watch mode
@@ -333,25 +333,25 @@ pnpm test:watch
 pnpm test:cov
 ```
 
-### Testes E2E (Cypress)
+### E2E Tests (Cypress)
 
 ```bash
-# Abrir Cypress UI
+# Open Cypress UI
 cd apps/web
 pnpm cypress:open
 
-# Executar headless
+# Run headless
 pnpm cypress:run
 ```
 
 ---
 
-## 📤 Deploy
+## Deploy
 
 ### Vercel (Frontend)
 
 ```bash
-# Instalar Vercel CLI
+# Install Vercel CLI
 npm i -g vercel
 
 # Deploy
@@ -361,21 +361,21 @@ vercel
 
 ### AWS / DigitalOcean (Backend)
 
-1. Build da imagem Docker
-2. Push para container registry
-3. Deploy no seu serviço preferido
+1. Build Docker image
+2. Push to container registry
+3. Deploy to your preferred service
 
 ### GitHub Actions
 
-O projeto inclui workflows de CI/CD automatizados:
-- ✅ Lint e type-check em PRs
-- ✅ Testes automatizados
-- ✅ Build e deploy automático
-- ✅ Build de imagens Docker
+The project includes automated CI/CD workflows:
+- Lint and type-check on PRs
+- Automated tests
+- Automatic build and deploy
+- Docker image builds
 
 ---
 
-## 📁 Estrutura do Projeto
+## Project Structure
 
 ```
 NexORA/
@@ -427,95 +427,95 @@ NexORA/
 
 ---
 
-## ✨ Features
+## Features
 
-### ✅ Implementadas
+### Implemented
 
-- [x] Autenticação JWT
-- [x] CRUD de usuários
-- [x] CRUD de projetos
-- [x] CRUD de tarefas
-- [x] WebSocket para real-time
-- [x] API REST documentada (Swagger)
+- [x] JWT Authentication
+- [x] User CRUD
+- [x] Project CRUD
+- [x] Task CRUD
+- [x] Real-time WebSocket
+- [x] Documented REST API (Swagger)
 - [x] GraphQL API
-- [x] Integração PostgreSQL com Prisma
-- [x] Docker compose para desenvolvimento
-- [x] CI/CD com GitHub Actions
-- [x] Testes unitários e E2E
-- [x] Interface responsiva
+- [x] PostgreSQL integration with Prisma
+- [x] Docker compose for development
+- [x] CI/CD with GitHub Actions
+- [x] Unit and E2E tests
+- [x] Responsive interface
 
-### 🚧 Em Desenvolvimento
+### In Development
 
-- [ ] Drag & drop de tarefas
-- [ ] Editor rico (Tiptap)
-- [ ] Sistema de comentários
-- [ ] Notificações em tempo real
-- [ ] Upload de arquivos
-- [ ] Busca avançada (Elasticsearch)
-- [ ] Integração OpenAI
-- [ ] Dashboard de analytics
-- [ ] Calendário de tarefas
+- [ ] Task drag & drop
+- [ ] Rich editor (Tiptap)
+- [ ] Comment system
+- [ ] Real-time notifications
+- [ ] File upload
+- [ ] Advanced search (Elasticsearch)
+- [ ] OpenAI integration
+- [ ] Analytics dashboard
+- [ ] Task calendar
 - [ ] Kanban board
 
-### 🔮 Roadmap Futuro
+### Future Roadmap
 
-- [ ] Automação de workflows (n8n)
-- [ ] Integração Zapier
+- [ ] Workflow automation (n8n)
+- [ ] Zapier integration
 - [ ] Mobile app (React Native)
-- [ ] Colaboração tipo Google Docs
-- [ ] Versionamento de documentos
-- [ ] Integrações (Slack, Discord, etc)
+- [ ] Google Docs-like collaboration
+- [ ] Document versioning
+- [ ] Integrations (Slack, Discord, etc)
 - [ ] SSO (SAML)
 - [ ] Audit logs
 - [ ] Multi-tenancy
 
 ---
 
-## 🤝 Contribuindo
+## Contributing
 
-Contribuições são bem-vindas! Por favor:
+Contributions are welcome! Please:
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'feat: Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+1. Fork the project
+2. Create a branch for your feature (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'feat: Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Convenção de Commits
+### Commit Convention
 
-Seguimos a convenção [Conventional Commits](https://www.conventionalcommits.org/):
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-- `feat:` Nova feature
-- `fix:` Correção de bug
-- `docs:` Documentação
-- `style:` Formatação
-- `refactor:` Refatoração
-- `test:` Testes
-- `chore:` Manutenção
-
----
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation
+- `style:` Formatting
+- `refactor:` Refactoring
+- `test:` Tests
+- `chore:` Maintenance
 
 ---
 
-## 👥 Equipe
+## License
 
-**NexORA Team** - [GitHub](https://github.com/seu-usuario)
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📞 Suporte
+## Team
 
-- 📧 Email: support@nexora.dev
-- 💬 Discord: [Join our server](https://discord.gg/nexora)
-- 📖 Docs: [docs.nexora.dev](https://docs.nexora.dev)
+**NexORA Team** - [GitHub](https://github.com/beatrizaraujow)
+
+---
+
+## Support
+
+- Email: support@nexora.dev
+- Discord: [Join our server](https://discord.gg/nexora)
+- Docs: [docs.nexora.dev](https://docs.nexora.dev)
 
 ---
 
 <div align="center">
-  <p>Feito com ❤️ usando Next.js, NestJS e TypeScript</p>
-  <p>⭐ Se este projeto te ajudou, considere dar uma estrela!</p>
+  <p>Made with Next.js, NestJS and TypeScript</p>
+  <p>If this project helped you, consider giving it a star!</p>
 </div>
