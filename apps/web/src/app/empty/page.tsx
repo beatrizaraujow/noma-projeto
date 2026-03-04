@@ -1,81 +1,46 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { EmptyState } from '@nexora/ui';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
+import { Button } from '@/components/common';
 
 export default function EmptyWorkspacePage() {
   const router = useRouter();
 
-  const handleCreateWorkspace = () => {
-    router.push('/onboarding');
-  };
-
-  const handleJoinWorkspace = () => {
-    // TODO: Implement join workspace flow
-    console.log('Join workspace');
-  };
-
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <EmptyState
-          variant="default"
-          icon={
-            <div className="relative">
-              <div className="w-20 h-20 bg-orange-100 rounded-2xl flex items-center justify-center">
-                <Plus className="h-10 w-10 text-orange-600" />
-              </div>
-            </div>
-          }
-          title="Welcome to NOMA!"
-          description="You don't have any workspaces yet. Create your first workspace to start collaborating with your team."
-          action={{
-            label: 'Create Workspace',
-            onClick: handleCreateWorkspace,
-          }}
-          secondaryAction={{
-            label: 'Join Existing Workspace',
-            onClick: handleJoinWorkspace,
-          }}
-        />
-
-        {/* Features */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">🚀</span>
-            </div>
-            <h3 className="font-semibold text-neutral-900 dark:text-white mb-1">
-              Fast Setup
-            </h3>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Get started in less than 2 minutes
-            </p>
+    <div className="min-h-screen bg-[#16161a] flex items-center justify-center p-4">
+      <div className="w-full max-w-3xl">
+        <div className="bg-[#1a1a1f] border border-gray-800 rounded-2xl p-10 text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Plus className="h-10 w-10 text-white" />
           </div>
 
-          <div className="text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">👥</span>
-            </div>
-            <h3 className="font-semibold text-neutral-900 dark:text-white mb-1">
-              Team Collaboration
-            </h3>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Invite your team and work together
-            </p>
+          <h1 className="text-3xl font-bold text-white mb-3">Bem-vinda ao NOMA</h1>
+          <p className="text-gray-400 mb-8 max-w-xl mx-auto">
+            Você ainda não possui workspaces. Crie o primeiro para começar a colaborar com sua equipe.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
+            <Button onClick={() => router.push('/onboarding')}>Criar Workspace</Button>
+            <Button variant="outline" onClick={() => router.push('/invite')}>
+              <Users size={16} className="mr-2" />
+              Entrar em Workspace
+            </Button>
           </div>
 
-          <div className="text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">📊</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            <div className="bg-[#25252b] border border-gray-700 rounded-xl p-4">
+              <h3 className="text-white font-semibold mb-1">Setup rápido</h3>
+              <p className="text-sm text-gray-400">Configure em poucos minutos.</p>
             </div>
-            <h3 className="font-semibold text-neutral-900 dark:text-white mb-1">
-              Project Management
-            </h3>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Organize and track all your projects
-            </p>
+            <div className="bg-[#25252b] border border-gray-700 rounded-xl p-4">
+              <h3 className="text-white font-semibold mb-1">Colaboração</h3>
+              <p className="text-sm text-gray-400">Convide time e trabalhem juntos.</p>
+            </div>
+            <div className="bg-[#25252b] border border-gray-700 rounded-xl p-4">
+              <h3 className="text-white font-semibold mb-1">Gestão completa</h3>
+              <p className="text-sm text-gray-400">Acompanhe projetos e tarefas.</p>
+            </div>
           </div>
         </div>
       </div>

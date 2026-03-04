@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -59,9 +60,7 @@ export default function SignupPage() {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-8 py-6">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-3xl font-bold text-white tracking-tight">
-            <span className="text-orange-400">/</span>noma
-          </span>
+          <Image src="/logo-white.svg" alt="NOMA" width={141} height={29} className="h-8 w-auto" priority />
         </Link>
         <Link
           href="/login"

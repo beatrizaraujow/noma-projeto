@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Query,
+  Headers,
 } from '@nestjs/common';
 import { IntegrationsService } from './integrations.service';
 import { CreateIntegrationDto, UpdateIntegrationDto, TestIntegrationDto } from './dto';
@@ -120,8 +121,9 @@ export class IntegrationsController {
   async handleGitHubWebhook(
     @Body() payload: any,
     @Query('workspaceId') workspaceId: string,
+    @Headers('x-github-event') githubEvent?: string,
   ) {
-    const event = payload.action || 'unknown';
+    const event = githubEvent || 'unknown';
     return this.integrationsService.handleGitHubWebhook(event, payload, workspaceId);
   }
 

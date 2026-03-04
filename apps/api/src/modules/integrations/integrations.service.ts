@@ -41,6 +41,43 @@ export class IntegrationsService {
       },
     });
 
+    if (['zapier', 'make', 'custom_webhook'].includes(data.type)) {
+      const provider = data.type === 'custom_webhook' ? 'custom' : (data.type as 'zapier' | 'make');
+
+      const webhookResult = await this.webhookService.createEndpoint({
+        workspaceId: data.workspaceId,
+        name: data.name,
+        description: data.description,
+        provider,
+        events: data.config.events,
+        createdBy: data.createdBy,
+        secret: data.config.secret,
+      });
+
+      const updatedConfig = {
+        ...data.config,
+        endpointId: webhookResult.endpoint.id,
+        webhookUrl: webhookResult.endpoint.url,
+      };
+
+      const updatedIntegration = await (this.prisma as any).integration.update({
+        where: { id: integration.id },
+        data: {
+          config: updatedConfig,
+        },
+      });
+
+      await this.createLog(
+        integration.id,
+        'webhook_endpoint_created',
+        'success',
+        `Webhook endpoint generated: ${webhookResult.endpoint.url}`,
+      );
+
+      await this.createLog(integration.id, 'integration_created', 'success', 'Integration created successfully');
+      return updatedIntegration;
+    }
+
     // Log creation
     await this.createLog(integration.id, 'integration_created', 'success', 'Integration created successfully');
 

@@ -21,10 +21,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import ViewSwitcher from '@/components/views/ViewSwitcher';
-import { TaskListView } from '@/components/views/TaskListView';
-import { TaskCalendarView } from '@/components/views/TaskCalendarView';
-import { TaskTimelineView } from '@/components/views/TaskTimelineView';
+import ViewSwitcher from '@/components/features/tasks/views/ViewSwitcher';
+import { TaskListView } from '@/components/features/tasks/views/TaskListView';
+import { TaskCalendarView } from '@/components/features/tasks/views/TaskCalendarView';
+import { TaskTimelineView } from '@/components/features/tasks/views/TaskTimelineView';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 

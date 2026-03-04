@@ -3,8 +3,8 @@
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import IntegrationManager from '@/components/IntegrationManager';
-import { Button } from '@/components/ui/button';
+import { IntegrationManager } from '@/components/features/integrations';
+import { Button } from '@/components/common';
 import { ArrowLeft } from 'lucide-react';
 
 export default function IntegrationsPage() {

@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
+  variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'danger' | 'info' | 'neutral';
   size?: 'sm' | 'md' | 'lg';
   removable?: boolean;
   onRemove?: () => void;
@@ -40,7 +40,7 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
             'bg-warning-light text-warning-dark dark:bg-yellow-900 dark:text-yellow-200': 
               variant === 'warning',
             'bg-error-light text-error-dark dark:bg-red-900 dark:text-red-200': 
-              variant === 'error',
+              variant === 'error' || variant === 'danger',
             'bg-info-light text-info-dark dark:bg-blue-900 dark:text-blue-200': 
               variant === 'info',
             'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300': 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface RecurringTask {
   id: string;
@@ -66,9 +67,7 @@ export default function RecurringPage() {
       <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#1a1a1a] border-r border-gray-800 transition-all duration-300 flex flex-col`}>
         <div className="p-4 border-b border-gray-800">
           <Link href="/workspaces">
-            <span className="text-2xl font-bold text-white">
-              <span className="text-orange-500">/</span>noma
-            </span>
+            <Image src="/logo-white.svg" alt="NOMA" width={141} height={29} className="h-7 w-auto" priority />
           </Link>
         </div>
 

@@ -503,10 +503,12 @@ const BillingTab: React.FC<BillingTabProps> = ({ billing, billingHistory, canMan
                     </td>
                     <td className="py-3 px-4 text-right">
                       {item.invoice ? (
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={item.invoice} target="_blank" rel="noopener noreferrer">
-                            <Eye className="h-4 w-4" />
-                          </a>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => window.open(item.invoice as string, '_blank', 'noopener,noreferrer')}
+                        >
+                          <Eye className="h-4 w-4" />
                         </Button>
                       ) : (
                         <span className="text-xs text-neutral-400">N/A</span>

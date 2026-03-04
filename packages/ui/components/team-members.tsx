@@ -203,7 +203,7 @@ export const TeamMembersGrid = React.forwardRef<HTMLDivElement, TeamMembersGridP
                         >
                           {member.status === 'invited' && onResendInvite && (
                             <DropdownItem
-                              icon={<Mail className="h-4 w-4" />}
+                              leftIcon={<Mail className="h-4 w-4" />}
                               onClick={() => onResendInvite(member.id)}
                             >
                               Resend Invite
@@ -212,13 +212,13 @@ export const TeamMembersGrid = React.forwardRef<HTMLDivElement, TeamMembersGridP
                           {canEditMember(member) && onChangeRole && (
                             <>
                               <DropdownItem
-                                icon={<Shield className="h-4 w-4" />}
+                                leftIcon={<Shield className="h-4 w-4" />}
                                 onClick={() => onChangeRole(member.id, 'admin')}
                               >
                                 Make Admin
                               </DropdownItem>
                               <DropdownItem
-                                icon={<User className="h-4 w-4" />}
+                                leftIcon={<User className="h-4 w-4" />}
                                 onClick={() => onChangeRole(member.id, 'member')}
                               >
                                 Make Member
@@ -227,7 +227,7 @@ export const TeamMembersGrid = React.forwardRef<HTMLDivElement, TeamMembersGridP
                           )}
                           {canEditMember(member) && onEditMember && (
                             <DropdownItem
-                              icon={<Edit className="h-4 w-4" />}
+                              leftIcon={<Edit className="h-4 w-4" />}
                               onClick={() => onEditMember(member)}
                             >
                               Edit
@@ -235,9 +235,9 @@ export const TeamMembersGrid = React.forwardRef<HTMLDivElement, TeamMembersGridP
                           )}
                           {canRemoveMember(member) && onRemoveMember && (
                             <DropdownItem
-                              icon={<Trash2 className="h-4 w-4" />}
+                              leftIcon={<Trash2 className="h-4 w-4" />}
                               onClick={() => onRemoveMember(member)}
-                              variant="danger"
+                              danger
                             >
                               Remove
                             </DropdownItem>

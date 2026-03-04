@@ -23,7 +23,7 @@ export default function LoginPage() {
       // Verificar credenciais hardcoded
       if (formData.email === 'admin@teste.com.br' && formData.password === 'teste1234') {
         // Login bem-sucedido
-        router.push('/workspaces');
+        router.push('/workspaces/1/dashboard');
       } else {
         throw new Error('Credenciais inválidas. Use: admin@teste.com.br / teste1234');
       }
@@ -55,9 +55,7 @@ export default function LoginPage() {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-8 py-6">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-3xl font-bold text-white tracking-tight">
-            <span className="text-orange-400">/</span>noma
-          </span>
+          <Image src="/logo-white.svg" alt="NOMA" width={141} height={29} className="h-8 w-auto" priority />
         </Link>
         <Link
           href="/signup"
