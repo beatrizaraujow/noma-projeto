@@ -8,6 +8,7 @@ import { Button } from '@/components/common';
 import { Sidebar, Header, MainContent } from '@/components/layout';
 import TeamProductivityMetrics from '@/components/features/dashboard/TeamProductivityMetrics';
 import { ArrowLeft, LayoutDashboard, CheckCircle2, Clock, TrendingUp, Users } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 export default function WorkspaceDashboardPage() {
   const params = useParams();
@@ -15,6 +16,21 @@ export default function WorkspaceDashboardPage() {
   const workspaceId = params.id as string;
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const { data: session } = useSession();
+  const taskStats = {
+    today: 0,
+    completed: 0,
+    efficiency: 0,
+    team: 0,
+    backlog: 0,
+    inProgress: 0,
+    inReview: 0,
+  };
+  const teamStats = {
+    activeMembers: 0,
+    averageProductivity: 0,
+    loggedHours: 0,
+  };
 
   const tabs = [
     { id: 'overview', label: 'Visão Geral', active: activeTab === 'overview' },
@@ -36,7 +52,7 @@ export default function WorkspaceDashboardPage() {
     );
   }
 
-  const token = 'demo-token';
+  const token = (session as any)?.accessToken || '';
 
   return (
     <div className="flex h-screen bg-[#16161a] overflow-hidden">
@@ -90,7 +106,7 @@ export default function WorkspaceDashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-400 text-sm mb-1">Tarefas Hoje</p>
-                      <p className="text-white text-2xl sm:text-3xl font-bold">14</p>
+                      <p className="text-white text-2xl sm:text-3xl font-bold">{taskStats.today}</p>
                     </div>
                     <div className="bg-orange-500/20 text-orange-400 p-3 rounded-lg">
                       <Clock size={20} />
@@ -102,7 +118,7 @@ export default function WorkspaceDashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-400 text-sm mb-1">Concluídas</p>
-                      <p className="text-white text-2xl sm:text-3xl font-bold">9</p>
+                      <p className="text-white text-2xl sm:text-3xl font-bold">{taskStats.completed}</p>
                     </div>
                     <div className="bg-orange-500/20 text-orange-400 p-3 rounded-lg">
                       <CheckCircle2 size={20} />
@@ -114,7 +130,7 @@ export default function WorkspaceDashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-400 text-sm mb-1">Eficiência</p>
-                      <p className="text-white text-2xl sm:text-3xl font-bold">67%</p>
+                      <p className="text-white text-2xl sm:text-3xl font-bold">{taskStats.efficiency}%</p>
                     </div>
                     <div className="bg-orange-500/20 text-orange-400 p-3 rounded-lg">
                       <TrendingUp size={20} />
@@ -126,7 +142,7 @@ export default function WorkspaceDashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-400 text-sm mb-1">Equipe</p>
-                      <p className="text-white text-2xl sm:text-3xl font-bold">12</p>
+                      <p className="text-white text-2xl sm:text-3xl font-bold">{taskStats.team}</p>
                     </div>
                     <div className="bg-orange-500/20 text-orange-400 p-3 rounded-lg">
                       <Users size={20} />
@@ -141,19 +157,19 @@ export default function WorkspaceDashboardPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 rounded-lg bg-[#25252b] border border-gray-700 hover:bg-[#2e2e35] transition-colors">
                       <span className="text-gray-300 text-sm">Backlog</span>
-                      <span className="text-white font-semibold">11</span>
+                      <span className="text-white font-semibold">{taskStats.backlog}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-lg bg-[#25252b] border border-gray-700 hover:bg-[#2e2e35] transition-colors">
                       <span className="text-gray-300 text-sm">Em andamento</span>
-                      <span className="text-orange-400 font-semibold">14</span>
+                      <span className="text-orange-400 font-semibold">{taskStats.inProgress}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-lg bg-[#25252b] border border-gray-700 hover:bg-[#2e2e35] transition-colors">
                       <span className="text-gray-300 text-sm">Em revisão</span>
-                      <span className="text-white font-semibold">5</span>
+                      <span className="text-white font-semibold">{taskStats.inReview}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-lg bg-[#25252b] border border-gray-700 hover:bg-[#2e2e35] transition-colors">
                       <span className="text-gray-300 text-sm">Concluídas</span>
-                      <span className="text-white font-semibold">9</span>
+                      <span className="text-white font-semibold">{taskStats.completed}</span>
                     </div>
                   </div>
                 </div>
@@ -189,15 +205,15 @@ export default function WorkspaceDashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 <div className="bg-[#1a1a1f] border border-gray-800 rounded-xl p-5 sm:p-6 shadow-[0_0_0_1px_rgba(249,115,22,0.02)] hover:border-orange-500/30 transition-colors">
                   <p className="text-gray-400 text-sm mb-1">Membros Ativos</p>
-                  <p className="text-white text-2xl sm:text-3xl font-bold">12</p>
+                  <p className="text-white text-2xl sm:text-3xl font-bold">{teamStats.activeMembers}</p>
                 </div>
                 <div className="bg-[#1a1a1f] border border-gray-800 rounded-xl p-5 sm:p-6 shadow-[0_0_0_1px_rgba(249,115,22,0.02)] hover:border-orange-500/30 transition-colors">
                   <p className="text-gray-400 text-sm mb-1">Produtividade Média</p>
-                  <p className="text-white text-2xl sm:text-3xl font-bold">87%</p>
+                  <p className="text-white text-2xl sm:text-3xl font-bold">{teamStats.averageProductivity}%</p>
                 </div>
                 <div className="bg-[#1a1a1f] border border-gray-800 rounded-xl p-5 sm:p-6 shadow-[0_0_0_1px_rgba(249,115,22,0.02)] hover:border-orange-500/30 transition-colors">
                   <p className="text-gray-400 text-sm mb-1">Horas Registradas</p>
-                  <p className="text-white text-2xl sm:text-3xl font-bold">312h</p>
+                  <p className="text-white text-2xl sm:text-3xl font-bold">{teamStats.loggedHours}h</p>
                 </div>
               </div>
 

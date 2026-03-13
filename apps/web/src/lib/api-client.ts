@@ -3,6 +3,7 @@
  */
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { getSession } from 'next-auth/react';
+import { trackFirstTaskCreatedOnce } from './analytics';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -35,7 +36,29 @@ apiClient.interceptors.request.use(
  * Response interceptor para tratamento centralizado de erros
  */
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config?.method?.toLowerCase();
+    const url = response.config?.url || '';
+
+    if (method === 'post' && url.includes('/api/tasks')) {
+      const task = response.data as {
+        id?: string;
+        projectId?: string;
+        project?: { id?: string; workspaceId?: string };
+      };
+
+      const workspaceId = task?.project?.workspaceId;
+      if (workspaceId) {
+        trackFirstTaskCreatedOnce({
+          workspaceId,
+          projectId: task?.project?.id || task?.projectId,
+          taskId: task?.id,
+        });
+      }
+    }
+
+    return response;
+  },
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Token expirado - redirecionar para login

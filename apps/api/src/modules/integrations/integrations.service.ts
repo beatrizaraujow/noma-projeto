@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { SlackService } from './services/slack.service';
 import { DiscordService } from './services/discord.service';
@@ -112,6 +112,44 @@ export class IntegrationsService {
     }
 
     return integration;
+  }
+
+  async assertTaskAccess(taskId: string, userId: string): Promise<void> {
+    const task = await this.prisma.task.findFirst({
+      where: {
+        id: taskId,
+        project: {
+          workspace: {
+            members: {
+              some: { userId },
+            },
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!task) {
+      throw new ForbiddenException('Task does not belong to an accessible workspace');
+    }
+  }
+
+  async assertWebhookEndpointAccess(endpointId: string, userId: string): Promise<void> {
+    const endpoint = await (this.prisma as any).webhookEndpoint.findFirst({
+      where: {
+        id: endpointId,
+        workspace: {
+          members: {
+            some: { userId },
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!endpoint) {
+      throw new ForbiddenException('Webhook endpoint does not belong to an accessible workspace');
+    }
   }
 
   async update(id: string, data: UpdateIntegrationDto) {

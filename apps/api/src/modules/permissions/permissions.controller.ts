@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesService } from './roles.service';
 import { ProjectMembersService } from './project-members.service';
 import { GuestAccessService } from './guest-access.service';
@@ -22,6 +23,7 @@ import {
 } from './dto/permissions.dto';
 
 @Controller('permissions')
+@UseGuards(JwtAuthGuard)
 export class PermissionsController {
   constructor(
     private rolesService: RolesService,
@@ -34,9 +36,9 @@ export class PermissionsController {
 
   @Post('roles')
   async createRole(@Body() data: CreateCustomRoleDto, @Request() req) {
-    const role = await this.rolesService.createCustomRole(data, req.user.id);
+    const role = await this.rolesService.createCustomRole(data, req.user.userId);
     await this.auditLogService.logCreate(
-      req.user.id,
+      req.user.userId,
       'role',
       role.id,
       `Criou role customizado: ${role.name}`
@@ -60,9 +62,9 @@ export class PermissionsController {
     @Body() data: UpdateCustomRoleDto,
     @Request() req
   ) {
-    const role = await this.rolesService.updateCustomRole(id, data, req.user.id);
+    const role = await this.rolesService.updateCustomRole(id, data, req.user.userId);
     await this.auditLogService.logUpdate(
-      req.user.id,
+      req.user.userId,
       'role',
       id,
       `Atualizou role: ${role.name}`
@@ -74,7 +76,7 @@ export class PermissionsController {
   async deleteRole(@Param('id') id: string, @Request() req) {
     const result = await this.rolesService.deleteCustomRole(id);
     await this.auditLogService.logDelete(
-      req.user.id,
+      req.user.userId,
       'role',
       id,
       'Deletou role customizado'
@@ -98,10 +100,10 @@ export class PermissionsController {
     const member = await this.projectMembersService.addProjectMember(
       projectId,
       data,
-      req.user.id
+      req.user.userId
     );
     await this.auditLogService.logPermission(
-      req.user.id,
+      req.user.userId,
       'member_add',
       data.userId,
       projectId,
@@ -112,7 +114,7 @@ export class PermissionsController {
 
   @Get('projects/:projectId/members')
   async getMembers(@Param('projectId') projectId: string, @Request() req) {
-    return this.projectMembersService.findProjectMembers(projectId, req.user.id);
+    return this.projectMembersService.findProjectMembers(projectId, req.user.userId);
   }
 
   @Get('projects/:projectId/members/:userId/permissions')
@@ -134,10 +136,10 @@ export class PermissionsController {
       projectId,
       memberId,
       data,
-      req.user.id
+      req.user.userId
     );
     await this.auditLogService.logPermission(
-      req.user.id,
+      req.user.userId,
       'permission_update',
       member.userId,
       projectId,
@@ -155,10 +157,10 @@ export class PermissionsController {
     const result = await this.projectMembersService.removeProjectMember(
       projectId,
       memberId,
-      req.user.id
+      req.user.userId
     );
     await this.auditLogService.logPermission(
-      req.user.id,
+      req.user.userId,
       'member_remove',
       memberId,
       projectId,
@@ -177,10 +179,10 @@ export class PermissionsController {
   ) {
     const access = await this.guestAccessService.createGuestAccess(
       { ...data, projectId },
-      req.user.id
+      req.user.userId
     );
     await this.auditLogService.logCreate(
-      req.user.id,
+      req.user.userId,
       'guest_access',
       access.id,
       `Criou acesso guest para ${data.email}`
@@ -190,7 +192,7 @@ export class PermissionsController {
 
   @Get('projects/:projectId/guest-access')
   async getGuestAccesses(@Param('projectId') projectId: string, @Request() req) {
-    return this.guestAccessService.findGuestAccesses(projectId, req.user.id);
+    return this.guestAccessService.findGuestAccesses(projectId, req.user.userId);
   }
 
   @Get('guest-access/:token')
@@ -200,9 +202,9 @@ export class PermissionsController {
 
   @Delete('guest-access/:id')
   async revokeGuestAccess(@Param('id') id: string, @Request() req) {
-    const access = await this.guestAccessService.revokeGuestAccess(id, req.user.id);
+    const access = await this.guestAccessService.revokeGuestAccess(id, req.user.userId);
     await this.auditLogService.logDelete(
-      req.user.id,
+      req.user.userId,
       'guest_access',
       id,
       'Revogou acesso guest'

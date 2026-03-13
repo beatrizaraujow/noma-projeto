@@ -64,13 +64,13 @@ export class AttachmentsController {
   }
 
   @Get('comment/:commentId')
-  findByComment(@Param('commentId') commentId: string) {
-    return this.attachmentsService.findByComment(commentId);
+  findByComment(@Param('commentId') commentId: string, @Request() req: any) {
+    return this.attachmentsService.findByComment(commentId, req.user.userId);
   }
 
   @Get('task/:taskId')
-  findByTask(@Param('taskId') taskId: string) {
-    return this.attachmentsService.findByTask(taskId);
+  findByTask(@Param('taskId') taskId: string, @Request() req: any) {
+    return this.attachmentsService.findByTask(taskId, req.user.userId);
   }
 
   @Delete(':id')
@@ -79,8 +79,8 @@ export class AttachmentsController {
   }
 
   @Get('download/:filename')
-  download(@Param('filename') filename: string, @Res() res: Response) {
-    const filepath = this.attachmentsService.getFilePath(filename);
+  async download(@Param('filename') filename: string, @Request() req: any, @Res() res: Response) {
+    const filepath = await this.attachmentsService.getAuthorizedFilePath(filename, req.user.userId);
     
     if (!fs.existsSync(filepath)) {
       throw new BadRequestException('File not found');

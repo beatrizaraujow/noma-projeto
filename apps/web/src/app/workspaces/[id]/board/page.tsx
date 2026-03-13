@@ -37,81 +37,27 @@ const INITIAL_COLUMNS: BoardColumn[] = [
   {
     id: 'backlog',
     title: 'Backlog',
-    tasks: [
-      {
-        id: '1',
-        title: 'Mapear requisitos do novo fluxo de onboarding',
-        priority: 'medium',
-        assignee: 'Ana',
-        dueDate: '22/02/2026',
-      },
-      {
-        id: '2',
-        title: 'Definir estrutura de permissões por workspace',
-        priority: 'high',
-        assignee: 'Bruno',
-        dueDate: '24/02/2026',
-      },
-    ],
+    tasks: [],
   },
   {
     id: 'todo',
     title: 'A Fazer',
-    tasks: [
-      {
-        id: '3',
-        title: 'Criar tela de configurações de equipe',
-        priority: 'high',
-        assignee: 'Carla',
-        dueDate: '21/02/2026',
-      },
-      {
-        id: '4',
-        title: 'Atualizar validações de formulário de login',
-        priority: 'urgent',
-        assignee: 'Diego',
-        dueDate: '20/02/2026',
-      },
-    ],
+    tasks: [],
   },
   {
     id: 'in-progress',
     title: 'Em Progresso',
-    tasks: [
-      {
-        id: '5',
-        title: 'Padronizar estilos das páginas de autenticação',
-        priority: 'medium',
-        assignee: 'Elisa',
-        dueDate: '23/02/2026',
-      },
-    ],
+    tasks: [],
   },
   {
     id: 'review',
     title: 'Em Revisão',
-    tasks: [
-      {
-        id: '6',
-        title: 'Revisar métricas do dashboard principal',
-        priority: 'low',
-        assignee: 'Fabio',
-        dueDate: '25/02/2026',
-      },
-    ],
+    tasks: [],
   },
   {
     id: 'done',
     title: 'Concluído',
-    tasks: [
-      {
-        id: '7',
-        title: 'Aplicar nova logo em telas principais',
-        priority: 'high',
-        assignee: 'Giovana',
-        dueDate: '19/02/2026',
-      },
-    ],
+    tasks: [],
   },
 ];
 

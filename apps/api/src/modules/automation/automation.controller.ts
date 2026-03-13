@@ -12,16 +12,30 @@ import {
 } from '@nestjs/common';
 import { AutomationService } from './automation.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { WorkspacesService } from '../workspaces/workspaces.service';
+import { ForbiddenException } from '@nestjs/common';
 
 @Controller('automation')
 @UseGuards(JwtAuthGuard)
 export class AutomationController {
-  constructor(private automationService: AutomationService) {}
+  constructor(
+    private automationService: AutomationService,
+    private readonly workspacesService: WorkspacesService,
+  ) {}
+
+  private async assertWorkspaceAccess(workspaceId: string, userId: string): Promise<void> {
+    const role = await this.workspacesService.getMemberRole(workspaceId, userId);
+    if (!role) {
+      throw new ForbiddenException('Access denied for this workspace');
+    }
+  }
 
   // ==================== TRIGGERS ====================
 
   @Post('triggers')
   async createTrigger(@Body() body: any, @Req() req: any) {
+    await this.assertWorkspaceAccess(body.workspaceId, req.user.userId);
+
     const trigger = await this.automationService.createTrigger({
       ...body,
       createdBy: req.user.userId,
@@ -33,7 +47,9 @@ export class AutomationController {
   async getTriggers(
     @Query('workspaceId') workspaceId: string,
     @Query('projectId') projectId?: string,
+    @Req() req?: any,
   ) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.automationService.getTriggers(workspaceId, projectId);
   }
 
@@ -51,6 +67,8 @@ export class AutomationController {
 
   @Post('templates')
   async createProjectTemplate(@Body() body: any, @Req() req: any) {
+    await this.assertWorkspaceAccess(body.workspaceId, req.user.userId);
+
     const template = await this.automationService.createProjectTemplate({
       ...body,
       createdBy: req.user.userId,
@@ -59,7 +77,8 @@ export class AutomationController {
   }
 
   @Get('templates')
-  async getProjectTemplates(@Query('workspaceId') workspaceId: string) {
+  async getProjectTemplates(@Query('workspaceId') workspaceId: string, @Req() req: any) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.automationService.getProjectTemplates(workspaceId);
   }
 
@@ -124,6 +143,8 @@ export class AutomationController {
 
   @Post('auto-assign-rules')
   async createAutoAssignRule(@Body() body: any, @Req() req: any) {
+    await this.assertWorkspaceAccess(body.workspaceId, req.user.userId);
+
     const rule = await this.automationService.createAutoAssignRule({
       ...body,
       createdBy: req.user.userId,
@@ -135,7 +156,9 @@ export class AutomationController {
   async getAutoAssignRules(
     @Query('workspaceId') workspaceId: string,
     @Query('projectId') projectId?: string,
+    @Req() req?: any,
   ) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.automationService.getAutoAssignRules(workspaceId, projectId);
   }
 

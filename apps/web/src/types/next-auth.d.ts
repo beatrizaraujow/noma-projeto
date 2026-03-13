@@ -14,6 +14,10 @@ declare module 'next-auth' {
       slug: string;
     };
     accessToken?: string;
+    refreshToken?: string;
+    error?: string;
+    accessTokenExpires?: number;
+    refreshTokenExpires?: number;
   }
 
   interface User {
@@ -22,6 +26,9 @@ declare module 'next-auth' {
     name: string;
     avatar?: string;
     accessToken?: string;
+    refreshToken?: string;
+    accessTokenExpiresIn?: number;
+    refreshTokenExpiresIn?: number;
     workspace?: any;
   }
 }
@@ -33,6 +40,10 @@ declare module 'next-auth/jwt' {
     name: string;
     avatar?: string;
     accessToken?: string;
+    refreshToken?: string;
+    accessTokenExpires?: number;
+    refreshTokenExpires?: number;
+    error?: string;
     workspace?: any;
   }
 }

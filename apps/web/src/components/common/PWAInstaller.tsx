@@ -4,6 +4,29 @@ import { useEffect, useState } from 'react';
 
 export function PWAInstaller() {
   useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return;
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      // Avoid stale UI in development by removing old SW registrations and caches.
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          registration.unregister();
+        });
+      });
+
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            caches.delete(name);
+          });
+        });
+      }
+
+      return;
+    }
+
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // Registrar service worker
       navigator.serviceWorker

@@ -7,6 +7,9 @@ import { WorkspaceDashboard } from '@/components/features/workspace';
 import { ProjectProgressTracker } from '@/components/features/projects';
 import TeamProductivityMetrics from './TeamProductivityMetrics';
 import WeeklyProductivityChart from './WeeklyProductivityChart';
+import ActivationFunnelWidget from './ActivationFunnelWidget';
+import ActivationChecklistWidget from './ActivationChecklistWidget';
+import SignupMetricsWidget from './SignupMetricsWidget';
 
 interface Widget {
   id: string;
@@ -50,6 +53,27 @@ const AVAILABLE_WIDGETS = [
     size: 'large' as const,
     description: 'Receita e pedidos por dia da semana',
   },
+  {
+    id: 'activation-checklist',
+    type: 'activation-checklist',
+    title: 'Checklist de Ativacao',
+    size: 'medium' as const,
+    description: 'Track first-value actions for pilot users',
+  },
+  {
+    id: 'activation-funnel',
+    type: 'activation-funnel',
+    title: 'Activation Funnel',
+    size: 'large' as const,
+    description: 'Track pilot onboarding conversion milestones',
+  },
+  {
+    id: 'signup-metrics',
+    type: 'signup-metrics',
+    title: 'Novos Cadastros',
+    size: 'medium' as const,
+    description: 'Track de novos cadastros por metodo e periodo',
+  },
 ];
 
 export default function CustomDashboardWidgets({
@@ -57,15 +81,60 @@ export default function CustomDashboardWidgets({
   token,
 }: CustomDashboardWidgetsProps) {
   const [widgets, setWidgets] = useState<Widget[]>(() => {
+    const defaultWidgets = AVAILABLE_WIDGETS.map((w) => ({ ...w, enabled: true }));
+
     // Load from localStorage if available
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(`dashboard-widgets-${workspaceId}`);
       if (saved) {
-        return JSON.parse(saved);
+        try {
+          const parsed = JSON.parse(saved);
+
+          if (Array.isArray(parsed)) {
+            const defaultWidgetsById = new Map(
+              defaultWidgets.map((widget) => [widget.id, widget])
+            );
+            const mergedWidgets: Widget[] = [];
+            const addedWidgetIds = new Set<string>();
+
+            // Preserve user-defined order for known widgets.
+            for (const item of parsed) {
+              if (!item?.id || addedWidgetIds.has(item.id)) {
+                continue;
+              }
+
+              const defaultWidget = defaultWidgetsById.get(item.id);
+              if (!defaultWidget) {
+                continue;
+              }
+
+              mergedWidgets.push({
+                ...defaultWidget,
+                enabled:
+                  typeof item.enabled === 'boolean'
+                    ? item.enabled
+                    : defaultWidget.enabled,
+              });
+              addedWidgetIds.add(item.id);
+            }
+
+            // Append new widgets added after user's last saved preferences.
+            for (const widget of defaultWidgets) {
+              if (!addedWidgetIds.has(widget.id)) {
+                mergedWidgets.push(widget);
+              }
+            }
+
+            return mergedWidgets;
+          }
+        } catch {
+          localStorage.removeItem(`dashboard-widgets-${workspaceId}`);
+        }
       }
     }
+
     // Default widgets
-    return AVAILABLE_WIDGETS.map((w) => ({ ...w, enabled: true }));
+    return defaultWidgets;
   });
   const [isCustomizing, setIsCustomizing] = useState(false);
 
@@ -272,6 +341,129 @@ export default function CustomDashboardWidgets({
           </div>
         );
 
+      case 'activation-funnel':
+        return (
+          <div key={widget.id} className="widget-container">
+            {isCustomizing && (
+              <div className="flex items-center justify-between mb-2 p-3 bg-[#1a1a1f] border border-gray-800 rounded-lg shadow-[0_0_0_1px_rgba(249,115,22,0.02)]">
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-4 w-4 text-gray-500 cursor-move" />
+                  <span className="text-sm font-medium text-white">{widget.title}</span>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveWidget(widget.id, 'up')}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveWidget(widget.id, 'down')}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    ↓
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleWidget(widget.id)}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            <ActivationFunnelWidget workspaceId={workspaceId} />
+          </div>
+        );
+
+      case 'activation-checklist':
+        return (
+          <div key={widget.id} className="widget-container">
+            {isCustomizing && (
+              <div className="flex items-center justify-between mb-2 p-3 bg-[#1a1a1f] border border-gray-800 rounded-lg shadow-[0_0_0_1px_rgba(249,115,22,0.02)]">
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-4 w-4 text-gray-500 cursor-move" />
+                  <span className="text-sm font-medium text-white">{widget.title}</span>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveWidget(widget.id, 'up')}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveWidget(widget.id, 'down')}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    ↓
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleWidget(widget.id)}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            <ActivationChecklistWidget workspaceId={workspaceId} token={token} />
+          </div>
+        );
+
+      case 'signup-metrics':
+        return (
+          <div key={widget.id} className="widget-container">
+            {isCustomizing && (
+              <div className="flex items-center justify-between mb-2 p-3 bg-[#1a1a1f] border border-gray-800 rounded-lg shadow-[0_0_0_1px_rgba(249,115,22,0.02)]">
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-4 w-4 text-gray-500 cursor-move" />
+                  <span className="text-sm font-medium text-white">{widget.title}</span>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveWidget(widget.id, 'up')}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveWidget(widget.id, 'down')}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    ↓
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleWidget(widget.id)}
+                    className="text-gray-300 hover:text-white hover:bg-[#25252b]"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            <SignupMetricsWidget workspaceId={workspaceId} token={token} />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -284,6 +476,7 @@ export default function CustomDashboardWidgets({
         <Button
           variant="ghost"
           onClick={() => setIsCustomizing(!isCustomizing)}
+          data-testid="dashboard-customize-toggle"
           className={
             isCustomizing
               ? 'bg-orange-500 text-white hover:bg-orange-600 border border-orange-500'
@@ -302,6 +495,7 @@ export default function CustomDashboardWidgets({
             {widgets.map((widget) => (
               <div
                 key={widget.id}
+                data-testid={`widget-config-${widget.id}`}
                 className="flex items-center justify-between p-3 bg-[#25252b] rounded-lg border border-gray-700 hover:border-orange-500/50 hover:bg-[#2e2e35] transition-colors"
               >
                 <div>
@@ -317,6 +511,7 @@ export default function CustomDashboardWidgets({
                   variant="ghost"
                   size="sm"
                   onClick={() => toggleWidget(widget.id)}
+                  data-testid={`widget-visibility-${widget.id}`}
                   className={
                     widget.enabled
                       ? 'bg-orange-500 text-white hover:bg-orange-600'

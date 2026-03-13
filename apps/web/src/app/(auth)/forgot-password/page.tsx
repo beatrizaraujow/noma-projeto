@@ -5,11 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/common';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +20,7 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -27,7 +30,11 @@ export default function ForgotPasswordPage() {
         throw new Error('Falha ao enviar link de redefinição');
       }
 
+      const body = await response.json().catch(() => ({}));
       setSuccess(true);
+      if (body?.resetToken) {
+        setResetToken(body.resetToken);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ocorreu um erro');
     } finally {
@@ -84,8 +91,21 @@ export default function ForgotPasswordPage() {
               </Button>
             </form>
           ) : (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-              Link enviado com sucesso! Verifique seu email para continuar.
+            <div className="space-y-3">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+                Link enviado com sucesso! Verifique seu email para continuar.
+              </div>
+              {resetToken && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 break-all">
+                  <p className="font-semibold mb-1">Modo desenvolvimento</p>
+                  <p>
+                    Token de reset: {resetToken}
+                  </p>
+                  <Link href={`/reset-password?token=${resetToken}`} className="underline mt-2 inline-block">
+                    Abrir tela de redefinicao
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

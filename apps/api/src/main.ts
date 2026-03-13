@@ -1,9 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
+import { requestIdMiddleware } from './common/middleware/request-id.middleware';
+import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
+import { GlobalExceptionTrackingFilter } from './common/filters/global-exception-tracking.filter';
 
 // NexORA API Bootstrap
 async function bootstrap() {
@@ -12,6 +16,7 @@ async function bootstrap() {
   // Security
   app.use(helmet());
   app.use(compression());
+  app.use(requestIdMiddleware);
 
   // CORS
   app.enableCors({
@@ -27,6 +32,13 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     })
   );
+
+  // Request logging and correlation
+  app.useGlobalInterceptors(new RequestLoggingInterceptor());
+
+  // Global exception tracking
+  const adapterHost = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new GlobalExceptionTrackingFilter(adapterHost));
 
   // Swagger documentation
   const config = new DocumentBuilder()

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -15,6 +15,24 @@ export class AttachmentsService {
     }
   }
 
+  private async canAccessTask(taskId: string, userId: string): Promise<boolean> {
+    const task = await this.prisma.task.findFirst({
+      where: {
+        id: taskId,
+        project: {
+          workspace: {
+            members: {
+              some: { userId },
+            },
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    return Boolean(task);
+  }
+
   async create(
     file: Express.Multer.File,
     data: {
@@ -23,6 +41,33 @@ export class AttachmentsService {
       uploadedBy: string;
     },
   ) {
+    if (!data.taskId && !data.commentId) {
+      throw new ForbiddenException('Attachment must be linked to a task or comment');
+    }
+
+    if (data.taskId) {
+      const canAccess = await this.canAccessTask(data.taskId, data.uploadedBy);
+      if (!canAccess) {
+        throw new ForbiddenException('You do not have access to attach files to this task');
+      }
+    }
+
+    if (data.commentId) {
+      const comment = await this.prisma.comment.findUnique({
+        where: { id: data.commentId },
+        select: { taskId: true },
+      });
+
+      if (!comment) {
+        throw new NotFoundException('Comment not found');
+      }
+
+      const canAccess = await this.canAccessTask(comment.taskId, data.uploadedBy);
+      if (!canAccess) {
+        throw new ForbiddenException('You do not have access to attach files to this comment');
+      }
+    }
+
     // Generate unique filename
     const ext = path.extname(file.originalname);
     const filename = `${randomBytes(16).toString('hex')}${ext}`;
@@ -47,7 +92,25 @@ export class AttachmentsService {
     return attachment;
   }
 
-  async findByComment(commentId: string) {
+  async findByComment(commentId: string, userId: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: {
+        task: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    const hasAccess = await this.canAccessTask(comment.taskId, userId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this comment attachments');
+    }
+
     return this.prisma.attachment.findMany({
       where: { commentId },
       orderBy: {
@@ -56,7 +119,12 @@ export class AttachmentsService {
     });
   }
 
-  async findByTask(taskId: string) {
+  async findByTask(taskId: string, userId: string) {
+    const hasAccess = await this.canAccessTask(taskId, userId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this task attachments');
+    }
+
     return this.prisma.attachment.findMany({
       where: { taskId },
       orderBy: {
@@ -93,7 +161,32 @@ export class AttachmentsService {
     return { success: true };
   }
 
-  getFilePath(filename: string): string {
+  async getAuthorizedFilePath(filename: string, userId: string): Promise<string> {
+    const attachment = await this.prisma.attachment.findFirst({
+      where: {
+        url: `/uploads/${filename}`,
+      },
+      include: {
+        comment: {
+          select: { taskId: true },
+        },
+      },
+    });
+
+    if (!attachment) {
+      throw new NotFoundException('Attachment not found');
+    }
+
+    const taskId = attachment.taskId || attachment.comment?.taskId;
+    if (!taskId) {
+      throw new NotFoundException('Attachment task reference not found');
+    }
+
+    const hasAccess = await this.canAccessTask(taskId, userId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this attachment');
+    }
+
     return path.join(this.uploadDir, filename);
   }
 }

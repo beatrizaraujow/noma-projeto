@@ -18,6 +18,9 @@ import { Card } from '@/components/common';
 import { TrendingUp, Award, Activity } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const ANALYTICS_BASE_URL = API_URL.endsWith('/api')
+  ? `${API_URL}/analytics`
+  : `${API_URL}/api/analytics`;
 
 interface MemberMetric {
   user: {
@@ -51,45 +54,12 @@ interface TeamProductivityMetricsProps {
   token: string;
 }
 
-const MOCK_TEAM_PRODUCTIVITY: TeamProductivityData = {
-  memberMetrics: [
-    {
-      user: {
-        id: 'u1',
-        name: 'João Silva',
-        email: 'joao@demo.com',
-      },
-      assignedTasks: 14,
-      completedTasks: 10,
-      completionRate: 71,
-      activitiesCount: 22,
-      commentsCount: 18,
-      recentActivities: [
-        { type: 'TASK_COMPLETED', count: 6 },
-        { type: 'COMMENT_ADDED', count: 8 },
-      ],
-    },
-    {
-      user: {
-        id: 'u2',
-        name: 'Maria Santos',
-        email: 'maria@demo.com',
-      },
-      assignedTasks: 12,
-      completedTasks: 9,
-      completionRate: 75,
-      activitiesCount: 19,
-      commentsCount: 11,
-      recentActivities: [
-        { type: 'TASK_COMPLETED', count: 5 },
-        { type: 'TASK_ASSIGNED', count: 4 },
-      ],
-    },
-  ],
+const EMPTY_TEAM_PRODUCTIVITY: TeamProductivityData = {
+  memberMetrics: [],
   teamAverages: {
-    totalAssigned: 26,
-    totalCompleted: 19,
-    averageCompletionRate: 73,
+    totalAssigned: 0,
+    totalCompleted: 0,
+    averageCompletionRate: 0,
   },
 };
 
@@ -109,14 +79,14 @@ export default function TeamProductivityMetrics({
     try {
       setLoading(true);
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/team-productivity`,
+        `${ANALYTICS_BASE_URL}/workspaces/${workspaceId}/team-productivity`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setData(response.data);
       setError(null);
     } catch (err: any) {
       console.error('Error loading team productivity:', err);
-      setData(MOCK_TEAM_PRODUCTIVITY);
+      setData(EMPTY_TEAM_PRODUCTIVITY);
       setError(null);
     } finally {
       setLoading(false);

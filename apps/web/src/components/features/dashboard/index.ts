@@ -12,3 +12,6 @@ export { default as CustomDashboardWidgets } from './CustomDashboardWidgets';
 export { default as DashboardExport } from './DashboardExport';
 export { default as TeamProductivityMetrics } from './TeamProductivityMetrics';
 export { default as WeeklyProductivityChart } from './WeeklyProductivityChart';
+export { default as ActivationFunnelWidget } from './ActivationFunnelWidget';
+export { default as ActivationChecklistWidget } from './ActivationChecklistWidget';
+export { default as SignupMetricsWidget } from './SignupMetricsWidget';

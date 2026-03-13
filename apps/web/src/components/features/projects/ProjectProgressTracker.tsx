@@ -19,6 +19,9 @@ import { Card } from '@/components/common';
 import { CheckCircle, Circle, Clock, AlertCircle } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const ANALYTICS_BASE_URL = API_URL.endsWith('/api')
+  ? `${API_URL}/analytics`
+  : `${API_URL}/api/analytics`;
 
 interface ProjectProgress {
   projectId: string;
@@ -41,41 +44,6 @@ interface ProjectProgressTrackerProps {
   workspaceId: string;
   token: string;
 }
-
-const MOCK_PROJECT_PROGRESS: ProjectProgress[] = [
-  {
-    projectId: 'p1',
-    projectName: 'Website Redesign',
-    totalTasks: 24,
-    completedTasks: 16,
-    inProgressTasks: 5,
-    todoTasks: 2,
-    overdueTasks: 1,
-    completionRate: 67,
-    tasksByPriority: [
-      { priority: 'LOW', count: 5 },
-      { priority: 'MEDIUM', count: 8 },
-      { priority: 'HIGH', count: 9 },
-      { priority: 'URGENT', count: 2 },
-    ],
-  },
-  {
-    projectId: 'p2',
-    projectName: 'Mobile App',
-    totalTasks: 18,
-    completedTasks: 9,
-    inProgressTasks: 4,
-    todoTasks: 4,
-    overdueTasks: 1,
-    completionRate: 50,
-    tasksByPriority: [
-      { priority: 'LOW', count: 3 },
-      { priority: 'MEDIUM', count: 6 },
-      { priority: 'HIGH', count: 7 },
-      { priority: 'URGENT', count: 2 },
-    ],
-  },
-];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 const PRIORITY_COLORS: Record<string, string> = {
@@ -101,14 +69,14 @@ export default function ProjectProgressTracker({
     try {
       setLoading(true);
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/project-progress`,
+        `${ANALYTICS_BASE_URL}/workspaces/${workspaceId}/project-progress`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setProjects(response.data);
       setError(null);
     } catch (err: any) {
       console.error('Error loading project progress:', err);
-      setProjects(MOCK_PROJECT_PROGRESS);
+      setProjects([]);
       setError(null);
     } finally {
       setLoading(false);

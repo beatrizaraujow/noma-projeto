@@ -10,16 +10,38 @@ import {
   Request,
   Query,
   Headers,
+  ForbiddenException,
 } from '@nestjs/common';
 import { IntegrationsService } from './integrations.service';
 import { CreateIntegrationDto, UpdateIntegrationDto, TestIntegrationDto } from './dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { WorkspacesService } from '../workspaces/workspaces.service';
 
 @Controller('integrations')
 export class IntegrationsController {
-  constructor(private readonly integrationsService: IntegrationsService) {}
+  constructor(
+    private readonly integrationsService: IntegrationsService,
+    private readonly workspacesService: WorkspacesService,
+  ) {}
+
+  private async assertWorkspaceAccess(workspaceId: string, userId: string): Promise<void> {
+    const role = await this.workspacesService.getMemberRole(workspaceId, userId);
+    if (!role) {
+      throw new ForbiddenException('Access denied for this workspace');
+    }
+  }
+
+  private async getAuthorizedIntegration(id: string, userId: string): Promise<any> {
+    const integration = await this.integrationsService.findOne(id);
+    await this.assertWorkspaceAccess(integration.workspaceId, userId);
+    return integration;
+  }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(@Body() createDto: CreateIntegrationDto, @Request() req) {
+    await this.assertWorkspaceAccess(createDto.workspaceId, req.user.userId);
+
     return this.integrationsService.create({
       ...createDto,
       createdBy: req.user?.userId,
@@ -27,27 +49,37 @@ export class IntegrationsController {
   }
 
   @Get()
-  async findAll(@Query('workspaceId') workspaceId: string) {
+  @UseGuards(JwtAuthGuard)
+  async findAll(@Query('workspaceId') workspaceId: string, @Request() req) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.integrationsService.findAll(workspaceId);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  async findOne(@Param('id') id: string, @Request() req) {
+    await this.getAuthorizedIntegration(id, req.user.userId);
     return this.integrationsService.findOne(id);
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateDto: UpdateIntegrationDto) {
+  @UseGuards(JwtAuthGuard)
+  async update(@Param('id') id: string, @Body() updateDto: UpdateIntegrationDto, @Request() req) {
+    await this.getAuthorizedIntegration(id, req.user.userId);
     return this.integrationsService.update(id, updateDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  async remove(@Param('id') id: string, @Request() req) {
+    await this.getAuthorizedIntegration(id, req.user.userId);
     return this.integrationsService.remove(id);
   }
 
   @Post(':id/test')
-  async test(@Param('id') id: string, @Body() testDto: TestIntegrationDto) {
+  @UseGuards(JwtAuthGuard)
+  async test(@Param('id') id: string, @Body() testDto: TestIntegrationDto, @Request() req) {
+    await this.getAuthorizedIntegration(id, req.user.userId);
     return this.integrationsService.test(id, testDto);
   }
 
@@ -64,7 +96,9 @@ export class IntegrationsController {
   }
 
   @Post('slack/notify')
-  async slackNotify(@Body() body: any) {
+  @UseGuards(JwtAuthGuard)
+  async slackNotify(@Body() body: any, @Request() req) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
     return this.integrationsService.sendSlackNotification(
       body.integrationId,
       body.message,
@@ -73,7 +107,9 @@ export class IntegrationsController {
   }
 
   @Post('discord/notify')
-  async discordNotify(@Body() body: any) {
+  @UseGuards(JwtAuthGuard)
+  async discordNotify(@Body() body: any, @Request() req) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
     return this.integrationsService.sendDiscordNotification(
       body.integrationId,
       body.message,
@@ -82,21 +118,30 @@ export class IntegrationsController {
   }
 
   @Post('email/sync')
-  async emailSync(@Body() body: { integrationId: string }) {
+  @UseGuards(JwtAuthGuard)
+  async emailSync(@Body() body: { integrationId: string }, @Request() req) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
     return this.integrationsService.syncEmail(body.integrationId);
   }
 
   @Post('calendar/sync')
-  async calendarSync(@Body() body: { integrationId: string }) {
+  @UseGuards(JwtAuthGuard)
+  async calendarSync(@Body() body: { integrationId: string }, @Request() req) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
     return this.integrationsService.syncCalendar(body.integrationId);
   }
 
   // ==================== GITHUB ENDPOINTS ====================
 
   @Post('github/link-pr')
+  @UseGuards(JwtAuthGuard)
   async linkPRToTask(
     @Body() body: { integrationId: string; taskId: string; repository: string; prNumber: number },
+    @Request() req,
   ) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
+    await this.integrationsService.assertTaskAccess(body.taskId, req.user.userId);
+
     return this.integrationsService.linkPRToTask(
       body.integrationId,
       body.taskId,
@@ -106,14 +151,19 @@ export class IntegrationsController {
   }
 
   @Post('github/sync-repository')
+  @UseGuards(JwtAuthGuard)
   async syncGitHubRepository(
     @Body() body: { integrationId: string; repository: string },
+    @Request() req,
   ) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
     return this.integrationsService.syncGitHubRepository(body.integrationId, body.repository);
   }
 
   @Get('github/task/:taskId/prs')
-  async getPRsForTask(@Param('taskId') taskId: string) {
+  @UseGuards(JwtAuthGuard)
+  async getPRsForTask(@Param('taskId') taskId: string, @Request() req) {
+    await this.integrationsService.assertTaskAccess(taskId, req.user.userId);
     return this.integrationsService.getPRsForTask(taskId);
   }
 
@@ -130,6 +180,7 @@ export class IntegrationsController {
   // ==================== FIGMA ENDPOINTS ====================
 
   @Post('figma/attach')
+  @UseGuards(JwtAuthGuard)
   async attachFigmaFile(
     @Body()
     body: {
@@ -140,6 +191,8 @@ export class IntegrationsController {
     },
     @Request() req,
   ) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
+
     return this.integrationsService.attachFigmaFile(
       body.integrationId,
       body.fileKey,
@@ -150,22 +203,28 @@ export class IntegrationsController {
   }
 
   @Get('figma/files')
+  @UseGuards(JwtAuthGuard)
   async getFigmaFiles(
+    @Request() req,
     @Query('workspaceId') workspaceId: string,
     @Query('projectId') projectId?: string,
     @Query('taskId') taskId?: string,
   ) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.integrationsService.getFigmaFiles(workspaceId, projectId, taskId);
   }
 
   @Post('figma/sync')
-  async syncFigmaFile(@Body() body: { integrationId: string; fileKey: string }) {
+  @UseGuards(JwtAuthGuard)
+  async syncFigmaFile(@Body() body: { integrationId: string; fileKey: string }, @Request() req) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
     return this.integrationsService.syncFigmaFile(body.integrationId, body.fileKey);
   }
 
   // ==================== CLOUD STORAGE ENDPOINTS ====================
 
   @Post('cloud/attach')
+  @UseGuards(JwtAuthGuard)
   async attachCloudFile(
     @Body()
     body: {
@@ -176,6 +235,8 @@ export class IntegrationsController {
     },
     @Request() req,
   ) {
+    await this.getAuthorizedIntegration(body.integrationId, req.user.userId);
+
     return this.integrationsService.attachCloudFile(
       body.integrationId,
       body.fileId,
@@ -186,12 +247,15 @@ export class IntegrationsController {
   }
 
   @Get('cloud/files')
+  @UseGuards(JwtAuthGuard)
   async getCloudFiles(
+    @Request() req,
     @Query('workspaceId') workspaceId: string,
     @Query('projectId') projectId?: string,
     @Query('taskId') taskId?: string,
     @Query('provider') provider?: string,
   ) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.integrationsService.getCloudFiles(
       workspaceId,
       projectId,
@@ -203,6 +267,7 @@ export class IntegrationsController {
   // ==================== WEBHOOK ENDPOINTS ====================
 
   @Post('webhooks/create')
+  @UseGuards(JwtAuthGuard)
   async createWebhookEndpoint(
     @Body()
     body: {
@@ -214,6 +279,8 @@ export class IntegrationsController {
     },
     @Request() req,
   ) {
+    await this.assertWorkspaceAccess(body.workspaceId, req.user.userId);
+
     return this.integrationsService.createWebhookEndpoint(
       body.workspaceId,
       body.name,
@@ -225,26 +292,35 @@ export class IntegrationsController {
   }
 
   @Get('webhooks')
-  async getWebhookEndpoints(@Query('workspaceId') workspaceId: string) {
+  @UseGuards(JwtAuthGuard)
+  async getWebhookEndpoints(@Query('workspaceId') workspaceId: string, @Request() req) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.integrationsService.getWebhookEndpoints(workspaceId);
   }
 
   @Put('webhooks/:id')
-  async updateWebhookEndpoint(@Param('id') id: string, @Body() updates: any) {
+  @UseGuards(JwtAuthGuard)
+  async updateWebhookEndpoint(@Param('id') id: string, @Body() updates: any, @Request() req) {
+    await this.integrationsService.assertWebhookEndpointAccess(id, req.user.userId);
     return this.integrationsService.updateWebhookEndpoint(id, updates);
   }
 
   @Delete('webhooks/:id')
-  async deleteWebhookEndpoint(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  async deleteWebhookEndpoint(@Param('id') id: string, @Request() req) {
+    await this.integrationsService.assertWebhookEndpointAccess(id, req.user.userId);
     return this.integrationsService.deleteWebhookEndpoint(id);
   }
 
   @Get('webhooks/:id/logs')
+  @UseGuards(JwtAuthGuard)
   async getWebhookLogs(
+    @Request() req,
     @Param('id') id: string,
     @Query('limit') limit?: string,
     @Query('status') status?: string,
   ) {
+    await this.integrationsService.assertWebhookEndpointAccess(id, req.user.userId);
     return this.integrationsService.getWebhookLogs(id, {
       limit: limit ? parseInt(limit) : 50,
       status,
@@ -252,9 +328,12 @@ export class IntegrationsController {
   }
 
   @Post('webhooks/trigger')
+  @UseGuards(JwtAuthGuard)
   async triggerWebhooks(
     @Body() body: { workspaceId: string; event: string; payload: any },
+    @Request() req,
   ) {
+    await this.assertWorkspaceAccess(body.workspaceId, req.user.userId);
     return this.integrationsService.triggerWebhooks(
       body.workspaceId,
       body.event,

@@ -1,0 +1,85 @@
+name: Uptime Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+env:
+  DEFAULT_TIMEOUT_SECONDS: '15'
+
+jobs:
+  healthcheck:
+    name: Check API Health Endpoint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate monitor configuration
+        env:
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+        run: |
+          if [ -z "$HEALTHCHECK_URL" ]; then
+            echo "HEALTHCHECK_URL variable is not configured."
+            echo "Set repository variable HEALTHCHECK_URL to your public endpoint, e.g. https://api.example.com/api/health"
+            exit 1
+          fi
+
+      - name: Call health endpoint
+        id: probe
+        env:
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+          TIMEOUT_SECONDS: ${{ env.DEFAULT_TIMEOUT_SECONDS }}
+        run: |
+          set -euo pipefail
+
+          response_file="$(mktemp)"
+          status_code="$(curl --silent --show-error --location --max-time "$TIMEOUT_SECONDS" --write-out "%{http_code}" --output "$response_file" "$HEALTHCHECK_URL" || true)"
+          response_body="$(cat "$response_file")"
+
+          echo "url=$HEALTHCHECK_URL" >> "$GITHUB_OUTPUT"
+          echo "status_code=$status_code" >> "$GITHUB_OUTPUT"
+
+          if [ "$status_code" != "200" ]; then
+            echo "Health endpoint returned non-200 status: $status_code"
+            echo "Response body: $response_body"
+            exit 1
+          fi
+
+          if ! echo "$response_body" | grep -Eq '"status"[[:space:]]*:[[:space:]]*"healthy"'; then
+            echo "Health endpoint did not return healthy status"
+            echo "Response body: $response_body"
+            exit 1
+          fi
+
+          echo "Health check passed for $HEALTHCHECK_URL"
+
+      - name: Send downtime alert webhook
+        if: failure() && secrets.ALERT_WEBHOOK_URL != ''
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+          STATUS_CODE: ${{ steps.probe.outputs.status_code }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          message="[NOMA] Uptime monitor FAILED at ${timestamp}. URL: ${HEALTHCHECK_URL}. HTTP: ${STATUS_CODE:-unknown}. Run: ${RUN_URL}"
+
+          if echo "$ALERT_WEBHOOK_URL" | grep -q 'discord.com/api/webhooks'; then
+            payload="{\"content\":\"${message}\"}"
+          else
+            payload="{\"text\":\"${message}\"}"
+          fi
+
+          curl --silent --show-error --fail \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "$payload" \
+            "$ALERT_WEBHOOK_URL"
+
+      - name: Warn when alert channel is missing
+        if: failure() && secrets.ALERT_WEBHOOK_URL == ''
+        run: |
+          echo "Healthcheck failed but ALERT_WEBHOOK_URL secret is not set, so no external alert was sent."
+          echo "Configure ALERT_WEBHOOK_URL to receive Slack/Discord notifications."

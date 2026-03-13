@@ -11,3 +11,4 @@ export { Spinner } from './spinner';
 export { ToastProvider, useToast, useSuccessToast, useErrorToast, useWarningToast, useInfoToast } from './toast';
 export { PWAInstaller } from './PWAInstaller';
 export { KeyboardShortcutsGuide, useKeyboardShortcutsGuide } from './KeyboardShortcutsGuide';
+export { WorkspaceScopedRedirect } from './WorkspaceScopedRedirect';

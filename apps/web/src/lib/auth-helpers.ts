@@ -1,8 +1,9 @@
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth-options';
 
 export async function getAccessToken(): Promise<string | null> {
-  const session = await getServerSession();
-  return (session as any)?.user?.accessToken || null;
+  const session = await getServerSession(authOptions);
+  return (session as any)?.accessToken || (session as any)?.user?.accessToken || null;
 }
 
 export async function getAuthHeaders(): Promise<HeadersInit> {

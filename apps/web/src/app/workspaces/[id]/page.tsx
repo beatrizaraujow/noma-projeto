@@ -36,18 +36,10 @@ interface Activity {
   user: string;
 }
 
-// Mock data
 const MOCK_TASKS: Task[] = [
-  { id: '1', title: 'Design da nova landing page', status: 'in-progress', priority: 'high', assignee: 'João', dueDate: '15/02/2026', project: 'Website' },
-  { id: '2', title: 'Corrigir bug no login', status: 'todo', priority: 'urgent', assignee: 'Sarah', dueDate: '12/02/2026', project: 'Backend' },
-  { id: '3', title: 'Atualizar documentação', status: 'completed', priority: 'low', assignee: 'Mike', dueDate: '10/02/2026', project: 'Docs' },
-  { id: '4', title: 'Reunião de revisão com cliente', status: 'todo', priority: 'medium', assignee: 'Ana', dueDate: '14/02/2026', project: 'Gestão' },
 ];
 
 const MOCK_ACTIVITIES: Activity[] = [
-  { id: '1', type: 'task', title: 'Tarefa Concluída', description: 'Design da landing page aprovado', time: '2h atrás', status: 'Concluído', user: 'João Silva' },
-  { id: '2', type: 'project', title: 'Novo Projeto', description: 'App Mobile iniciado', time: '5h atrás', status: 'Em Progresso', user: 'Maria Santos' },
-  { id: '3', type: 'member', title: 'Novo Membro', description: 'Pedro entrou na equipe', time: '1d atrás', status: 'Ativo', user: 'Admin' },
 ];
 
 export default function WorkspaceDetailPage() {
@@ -63,15 +55,23 @@ export default function WorkspaceDetailPage() {
     { id: 'team', label: 'Equipe', active: activeTab === 'team' },
   ];
 
+  const teamMembers = Array.from(new Set(MOCK_TASKS.map((task) => task.assignee)));
+  const completedTasks = MOCK_TASKS.filter((task) => task.status === 'completed').length;
+  const pendingTasks = MOCK_TASKS.filter((task) => task.status === 'todo' || task.status === 'in-progress').length;
+  const inProgressTasks = MOCK_TASKS.filter((task) => task.status === 'in-progress').length;
+  const blockedTasks = MOCK_TASKS.filter((task) => task.status === 'blocked').length;
+  const totalTasks = MOCK_TASKS.length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
   // Stats data
   const stats = {
-    totalTasks: 42,
-    completedTasks: 28,
-    inProgressTasks: 8,
-    overdueTasks: 6,
-    completionRate: 67,
-    activeProjects: 5,
-    teamMembers: 12,
+    totalTasks,
+    completedTasks,
+    inProgressTasks,
+    overdueTasks: blockedTasks,
+    completionRate,
+    activeProjects: Array.from(new Set(MOCK_TASKS.map((task) => task.project))).length,
+    teamMembers: teamMembers.length,
   };
 
   // Transform tasks for OrdersTable
@@ -88,10 +88,6 @@ export default function WorkspaceDetailPage() {
              task.priority === 'high' ? 'Alta' :
              task.priority === 'medium' ? 'Média' : 'Baixa'
   }));
-
-  const teamMembers = Array.from(new Set(MOCK_TASKS.map((task) => task.assignee)));
-  const completedTasks = MOCK_TASKS.filter((task) => task.status === 'completed').length;
-  const pendingTasks = MOCK_TASKS.filter((task) => task.status === 'todo' || task.status === 'in-progress').length;
 
   return (
     <div className="flex h-screen bg-[#16161a] overflow-hidden">
@@ -111,7 +107,6 @@ export default function WorkspaceDetailPage() {
                 <MetricCard
                   title="Total de Tarefas"
                   value={stats.totalTasks}
-                  trend={{ value: 12.5, direction: 'up' }}
                   subtitle="Este mês"
                   icon={<LayoutDashboard size={20} />}
                   iconBgColor="bg-orange-500/20"
@@ -121,7 +116,6 @@ export default function WorkspaceDetailPage() {
                 <MetricCard
                   title="Concluídas"
                   value={stats.completedTasks}
-                  trend={{ value: stats.completionRate, direction: 'up' }}
                   subtitle={`${stats.completionRate}% de conclusão`}
                   icon={<CheckCircle2 size={20} />}
                   iconBgColor="bg-orange-500/20"
@@ -140,7 +134,6 @@ export default function WorkspaceDetailPage() {
                 <MetricCard
                   title="Atrasadas"
                   value={stats.overdueTasks}
-                  trend={{ value: 15, direction: 'down' }}
                   subtitle="Precisa de atenção"
                   icon={<AlertCircle size={20} />}
                   iconBgColor="bg-orange-500/20"
@@ -177,7 +170,7 @@ export default function WorkspaceDetailPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400 text-sm">Tarefas/Membro</span>
-                      <span className="text-white font-semibold">{Math.round(stats.totalTasks / stats.teamMembers)}</span>
+                      <span className="text-white font-semibold">{stats.teamMembers > 0 ? Math.round(stats.totalTasks / stats.teamMembers) : 0}</span>
                     </div>
                   </div>
 
@@ -228,6 +221,9 @@ export default function WorkspaceDetailPage() {
                         </div>
                       </div>
                     ))}
+                    {MOCK_ACTIVITIES.length === 0 && (
+                      <p className="text-gray-400 text-sm">Sem atividades recentes.</p>
+                    )}
                   </div>
                 </div>
 
@@ -399,6 +395,9 @@ export default function WorkspaceDetailPage() {
                       </span>
                     </div>
                   ))}
+                    {teamMembers.length === 0 && (
+                      <p className="text-gray-400 text-sm">Sem membros com atividade registrada.</p>
+                    )}
                 </div>
               </div>
 
@@ -415,7 +414,7 @@ export default function WorkspaceDetailPage() {
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-[#25252b] border border-gray-700">
                     <span className="text-gray-400 text-sm">Projetos por membro</span>
-                    <span className="text-orange-400 font-semibold">{Math.max(1, Math.round(stats.activeProjects / teamMembers.length))}</span>
+                    <span className="text-orange-400 font-semibold">{teamMembers.length > 0 ? Math.round(stats.activeProjects / teamMembers.length) : 0}</span>
                   </div>
                 </div>
 

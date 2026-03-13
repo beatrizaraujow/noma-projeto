@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { UsersModule } from '../users/users.module';
 import { WorkspacesModule } from '../workspaces/workspaces.module';
+import { TokenRevocationService } from './token-revocation.service';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { WorkspacesModule } from '../workspaces/workspaces.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
+  providers: [AuthService, JwtStrategy, LocalStrategy, TokenRevocationService],
   controllers: [AuthController],
   exports: [AuthService],
 })

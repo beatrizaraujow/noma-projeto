@@ -9,15 +9,17 @@ export class AppController {
 
   @Get()
   @ApiOperation({ summary: 'API Root' })
-  getRoot(): { message: string; timestamp: string; status: string } {
+  async getRoot(): Promise<{ message: string; timestamp: string; status: string; database: 'up' | 'down' }> {
     return this.appService.getHealthCheck();
   }
 
   @Get('health')
   @ApiOperation({ summary: 'Health check endpoint' })
-  getHealth(): { message: string; timestamp: string; status: string; uptime: number } {
+  async getHealth(): Promise<{ message: string; timestamp: string; status: string; database: 'up' | 'down'; uptime: number }> {
+    const health = await this.appService.getHealthCheck();
+
     return {
-      ...this.appService.getHealthCheck(),
+      ...health,
       uptime: process.uptime(),
     };
   }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface TriggerConfig {
@@ -82,6 +82,24 @@ export interface AutoAssignRule {
 @Injectable()
 export class AutomationService {
   constructor(private prisma: PrismaService) {}
+
+  private async getAccessibleTaskIds(taskIds: string[], userId: string): Promise<string[]> {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        id: { in: taskIds },
+        project: {
+          workspace: {
+            members: {
+              some: { userId },
+            },
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    return tasks.map((task) => task.id);
+  }
 
   // ==================== TRIGGERS ====================
 
@@ -426,6 +444,12 @@ export class AutomationService {
     data: any,
     userId: string,
   ) {
+    const accessibleTaskIds = await this.getAccessibleTaskIds(taskIds, userId);
+
+    if (accessibleTaskIds.length === 0) {
+      throw new ForbiddenException('No accessible tasks found for bulk action');
+    }
+
     const results = {
       success: 0,
       failed: 0,
@@ -436,12 +460,12 @@ export class AutomationService {
       case 'update_status':
         try {
           await this.prisma.task.updateMany({
-            where: { id: { in: taskIds } },
+            where: { id: { in: accessibleTaskIds } },
             data: { status: data.status },
           });
-          results.success = taskIds.length;
+          results.success = accessibleTaskIds.length;
         } catch (error: any) {
-          results.failed = taskIds.length;
+          results.failed = accessibleTaskIds.length;
           results.errors.push(error?.message || 'Error updating status');
         }
         break;
@@ -449,12 +473,12 @@ export class AutomationService {
       case 'update_priority':
         try {
           await this.prisma.task.updateMany({
-            where: { id: { in: taskIds } },
+            where: { id: { in: accessibleTaskIds } },
             data: { priority: data.priority },
           });
-          results.success = taskIds.length;
+          results.success = accessibleTaskIds.length;
         } catch (error: any) {
-          results.failed = taskIds.length;
+          results.failed = accessibleTaskIds.length;
           results.errors.push(error?.message || 'Error updating priority');
         }
         break;
@@ -462,12 +486,12 @@ export class AutomationService {
       case 'assign':
         try {
           await this.prisma.task.updateMany({
-            where: { id: { in: taskIds } },
+            where: { id: { in: accessibleTaskIds } },
             data: { assigneeId: data.assigneeId },
           });
-          results.success = taskIds.length;
+          results.success = accessibleTaskIds.length;
         } catch (error: any) {
-          results.failed = taskIds.length;
+          results.failed = accessibleTaskIds.length;
           results.errors.push(error?.message || 'Error assigning tasks');
         }
         break;
@@ -475,18 +499,18 @@ export class AutomationService {
       case 'delete':
         try {
           await this.prisma.task.deleteMany({
-            where: { id: { in: taskIds } },
+            where: { id: { in: accessibleTaskIds } },
           });
-          results.success = taskIds.length;
+          results.success = accessibleTaskIds.length;
         } catch (error: any) {
-          results.failed = taskIds.length;
+          results.failed = accessibleTaskIds.length;
           results.errors.push(error?.message || 'Error deleting tasks');
         }
         break;
 
       case 'add_tag':
         // Add tag to multiple tasks
-        for (const taskId of taskIds) {
+        for (const taskId of accessibleTaskIds) {
           try {
             // Implement tag logic
             results.success++;
@@ -500,12 +524,12 @@ export class AutomationService {
       case 'move_project':
         try {
           await this.prisma.task.updateMany({
-            where: { id: { in: taskIds } },
+            where: { id: { in: accessibleTaskIds } },
             data: { projectId: data.projectId },
           });
-          results.success = taskIds.length;
+          results.success = accessibleTaskIds.length;
         } catch (error: any) {
-          results.failed = taskIds.length;
+          results.failed = accessibleTaskIds.length;
           results.errors.push(error?.message || 'Error moving tasks');
         }
         break;

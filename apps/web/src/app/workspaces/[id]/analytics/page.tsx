@@ -6,6 +6,7 @@ import { Sidebar, Header, MainContent } from '@/components/layout';
 import { MetricCard, WeeklyProductivityChart } from '@/components/features/dashboard';
 import { Badge, Button } from '@/components/common';
 import axios from 'axios';
+import { useSession } from 'next-auth/react';
 import {
   CartesianGrid,
   Legend,
@@ -57,7 +58,8 @@ interface ProjectProgress {
 export default function AnalyticsPage() {
   const params = useParams();
   const workspaceId = String(params.id);
-  const token = 'demo-token';
+  const { data: session } = useSession();
+  const token = (session as any)?.accessToken || '';
   const [activeTab, setActiveTab] = useState('overview');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [projectProgressData, setProjectProgressData] = useState<ProjectProgress[]>([]);
@@ -68,28 +70,41 @@ export default function AnalyticsPage() {
     { id: 'reports', label: 'Relatórios', active: activeTab === 'reports' },
   ];
 
-  // Analytics data
-  const metrics = {
-    totalHours: 342,
-    completionRate: 78,
-    averageTaskTime: 4.2,
-    productivityScore: 8.5,
-    tasksCompleted: 156,
-    tasksCreated: 200,
-  };
+  const metrics = useMemo(() => {
+    const overview = dashboardData?.overview;
+    return {
+      totalHours: 0,
+      completionRate: overview?.completionRate ?? 0,
+      averageTaskTime: 0,
+      productivityScore: 0,
+      tasksCompleted: overview?.completedTasks ?? 0,
+      tasksCreated: overview?.totalTasks ?? 0,
+    };
+  }, [dashboardData]);
 
-  const fallbackProjectPerformance = [
-    { name: 'Website', completion: 85, tasks: 34, hours: 128 },
-    { name: 'App Mobile', completion: 62, tasks: 28, hours: 98 },
-    { name: 'Design System', completion: 91, tasks: 19, hours: 76 },
-    { name: 'Marketing', completion: 45, tasks: 22, hours: 40 },
-  ];
+  const reportStats = useMemo(() => {
+    const inProgress = Math.max(0, metrics.tasksCreated - metrics.tasksCompleted);
+    return {
+      completed: metrics.tasksCompleted,
+      inProgress,
+      todo: 0,
+      urgent: 0,
+      high: 0,
+      medium: 0,
+    };
+  }, [metrics]);
 
   const heatmapHours = ['09h', '10h', '11h', '12h', '13h', '14h', '15h'];
   const heatmapDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
   useEffect(() => {
     const loadAnalytics = async () => {
+      if (!token) {
+        setDashboardData(null);
+        setProjectProgressData([]);
+        return;
+      }
+
       try {
         const [dashboardResponse, projectProgressResponse] = await Promise.all([
           axios.get(`${API_URL}/analytics/workspaces/${workspaceId}/dashboard`, {
@@ -108,13 +123,9 @@ export default function AnalyticsPage() {
     };
 
     loadAnalytics();
-  }, [workspaceId]);
+  }, [workspaceId, token]);
 
   const projectPerformance = useMemo(() => {
-    if (projectProgressData.length === 0) {
-      return fallbackProjectPerformance;
-    }
-
     return projectProgressData.map((project) => ({
       name: project.projectName,
       completion: project.completionRate,
@@ -127,15 +138,7 @@ export default function AnalyticsPage() {
     const base = Array.from({ length: heatmapHours.length }, () => Array.from({ length: heatmapDays.length }, () => 0));
 
     if (!dashboardData?.recentActivity?.length) {
-      return [
-        [0, 0, 1, 0, 0, 0, 0],
-        [0, 1, 1, 2, 1, 0, 0],
-        [1, 1, 2, 3, 2, 1, 0],
-        [1, 2, 3, 4, 3, 2, 1],
-        [1, 2, 2, 3, 2, 1, 0],
-        [0, 1, 1, 2, 1, 1, 0],
-        [0, 0, 1, 0, 0, 0, 0],
-      ];
+      return base;
     }
 
     dashboardData.recentActivity.forEach((activity) => {
@@ -158,17 +161,6 @@ export default function AnalyticsPage() {
   }, [dashboardData]);
 
   const monthlyPerformanceData = useMemo(() => {
-    if (!dashboardData?.recentActivity?.length) {
-      return [
-        { month: 'Jan', sales: 2500, target: 3000 },
-        { month: 'Fev', sales: 4700, target: 3400 },
-        { month: 'Mar', sales: 3300, target: 4500 },
-        { month: 'Abr', sales: 5000, target: 3830 },
-        { month: 'Mai', sales: 3900, target: 4400 },
-        { month: 'Jun', sales: 5600, target: 5000 },
-      ];
-    }
-
     const now = new Date();
     const months = Array.from({ length: 6 }, (_, index) => {
       const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
@@ -192,7 +184,7 @@ export default function AnalyticsPage() {
       targetMonth.sales += 1;
     });
 
-    const averageSales = Math.max(1, Math.round(months.reduce((acc, item) => acc + item.sales, 0) / months.length));
+    const averageSales = Math.round(months.reduce((acc, item) => acc + item.sales, 0) / months.length);
 
     return months.map((item) => ({
       month: item.month,
@@ -210,8 +202,13 @@ export default function AnalyticsPage() {
   };
 
   const topPerformer = projectPerformance.reduce((best, current) =>
-    current.completion > best.completion ? current : best
+    current.completion > best.completion ? current : best,
+    projectPerformance[0] || { name: 'Sem dados', completion: 0, tasks: 0, hours: 0 }
   );
+  const averageCompletion =
+    projectPerformance.length > 0
+      ? Math.round(projectPerformance.reduce((sum, item) => sum + item.completion, 0) / projectPerformance.length)
+      : 0;
 
   return (
     <div className="flex h-screen bg-[#16161a] overflow-hidden">
@@ -231,7 +228,6 @@ export default function AnalyticsPage() {
                 <MetricCard
                   title="Total de Horas"
                   value={`${metrics.totalHours}h`}
-                  trend={{ value: 8, direction: 'up' }}
                   subtitle="Este mês"
                   icon={<Clock size={20} />}
                   iconBgColor="bg-orange-500/20"
@@ -241,7 +237,6 @@ export default function AnalyticsPage() {
                 <MetricCard
                   title="Taxa de Conclusão"
                   value={`${metrics.completionRate}%`}
-                  trend={{ value: 5, direction: 'up' }}
                   subtitle="Vs. mês anterior"
                   icon={<Target size={20} />}
                   iconBgColor="bg-orange-500/20"
@@ -260,7 +255,6 @@ export default function AnalyticsPage() {
                 <MetricCard
                   title="Score de Produtividade"
                   value={`${metrics.productivityScore}/10`}
-                  trend={{ value: 0.5, direction: 'up' }}
                   subtitle="Excelente!"
                   icon={<TrendingUp size={20} />}
                   iconBgColor="bg-orange-500/20"
@@ -270,7 +264,6 @@ export default function AnalyticsPage() {
                 <MetricCard
                   title="Tarefas Concluídas"
                   value={metrics.tasksCompleted}
-                  trend={{ value: 12, direction: 'up' }}
                   subtitle="Esta semana"
                   icon={<CheckCircle2 size={20} />}
                   iconBgColor="bg-orange-500/20"
@@ -311,6 +304,9 @@ export default function AnalyticsPage() {
                         </div>
                       </div>
                     ))}
+                    {projectPerformance.length === 0 && (
+                      <p className="text-gray-400 text-sm">Sem dados de performance por projeto.</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -415,6 +411,9 @@ export default function AnalyticsPage() {
                         </div>
                       </div>
                     ))}
+                    {projectPerformance.length === 0 && (
+                      <p className="text-gray-400 text-sm">Sem projetos para ranqueamento.</p>
+                    )}
                   </div>
                 </div>
 
@@ -428,9 +427,7 @@ export default function AnalyticsPage() {
                   <div className="mt-4 space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Média de conclusão</span>
-                      <span className="text-white font-medium">
-                        {Math.round(projectPerformance.reduce((sum, item) => sum + item.completion, 0) / projectPerformance.length)}%
-                      </span>
+                      <span className="text-white font-medium">{averageCompletion}%</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Projetos acompanhados</span>
@@ -454,15 +451,15 @@ export default function AnalyticsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Concluídas</span>
-                    <Badge variant="success">156</Badge>
+                    <Badge variant="success">{reportStats.completed}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Em Progresso</span>
-                    <Badge variant="warning">28</Badge>
+                    <Badge variant="warning">{reportStats.inProgress}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">A Fazer</span>
-                    <Badge variant="outline">16</Badge>
+                    <Badge variant="outline">{reportStats.todo}</Badge>
                   </div>
                 </div>
               </div>
@@ -477,15 +474,15 @@ export default function AnalyticsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Urgente</span>
-                    <Badge variant="error">8</Badge>
+                    <Badge variant="error">{reportStats.urgent}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Alta</span>
-                    <Badge variant="warning">24</Badge>
+                    <Badge variant="warning">{reportStats.high}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Média</span>
-                    <Badge variant="info">42</Badge>
+                    <Badge variant="info">{reportStats.medium}</Badge>
                   </div>
                 </div>
               </div>

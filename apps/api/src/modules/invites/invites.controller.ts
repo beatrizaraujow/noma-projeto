@@ -12,12 +12,24 @@ import {
 import { InvitesService } from './invites.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { WorkspacesService } from '../workspaces/workspaces.service';
+import { ForbiddenException } from '@nestjs/common';
 
 @ApiTags('invites')
 @ApiBearerAuth()
 @Controller('invites')
 export class InvitesController {
-  constructor(private readonly invitesService: InvitesService) {}
+  constructor(
+    private readonly invitesService: InvitesService,
+    private readonly workspacesService: WorkspacesService,
+  ) {}
+
+  private async assertWorkspaceAccess(workspaceId: string, userId: string): Promise<void> {
+    const role = await this.workspacesService.getMemberRole(workspaceId, userId);
+    if (!role) {
+      throw new ForbiddenException('Access denied for this workspace');
+    }
+  }
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -26,6 +38,8 @@ export class InvitesController {
     @Body() body: { workspaceId: string; email: string; role: string },
     @Request() req,
   ) {
+    await this.assertWorkspaceAccess(body.workspaceId, req.user.userId);
+
     return this.invitesService.create(
       body.workspaceId,
       body.email,
@@ -37,7 +51,8 @@ export class InvitesController {
   @UseGuards(JwtAuthGuard)
   @Get('workspace/:workspaceId')
   @ApiOperation({ summary: 'Get all pending invites for workspace' })
-  async findByWorkspace(@Param('workspaceId') workspaceId: string) {
+  async findByWorkspace(@Param('workspaceId') workspaceId: string, @Request() req) {
+    await this.assertWorkspaceAccess(workspaceId, req.user.userId);
     return this.invitesService.findByWorkspace(workspaceId);
   }
 
@@ -60,7 +75,9 @@ export class InvitesController {
   async revoke(
     @Param('id') id: string,
     @Body() body: { workspaceId: string },
+    @Request() req,
   ) {
+    await this.assertWorkspaceAccess(body.workspaceId, req.user.userId);
     return this.invitesService.revoke(id, body.workspaceId);
   }
 }

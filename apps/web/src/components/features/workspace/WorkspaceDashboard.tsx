@@ -28,6 +28,9 @@ import {
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const ANALYTICS_BASE_URL = API_URL.endsWith('/api')
+  ? `${API_URL}/analytics`
+  : `${API_URL}/api/analytics`;
 
 interface DashboardData {
   overview: {
@@ -57,39 +60,16 @@ interface WorkspaceDashboardProps {
   token: string;
 }
 
-const buildMockDashboardData = (): DashboardData => ({
+const buildEmptyDashboardData = (): DashboardData => ({
   overview: {
-    totalProjects: 5,
-    totalTasks: 42,
-    totalMembers: 12,
-    completedTasks: 28,
-    overdueTasks: 6,
-    completionRate: 67,
+    totalProjects: 0,
+    totalTasks: 0,
+    totalMembers: 0,
+    completedTasks: 0,
+    overdueTasks: 0,
+    completionRate: 0,
   },
-  recentActivity: [
-    {
-      id: 'a1',
-      type: 'task',
-      description: 'concluiu a tarefa "Design da landing page"',
-      createdAt: new Date().toISOString(),
-      user: {
-        id: 'u1',
-        name: 'João Silva',
-        email: 'joao@demo.com',
-      },
-    },
-    {
-      id: 'a2',
-      type: 'project',
-      description: 'criou o projeto "App Mobile"',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      user: {
-        id: 'u2',
-        name: 'Maria Santos',
-        email: 'maria@demo.com',
-      },
-    },
-  ],
+  recentActivity: [],
 });
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -107,14 +87,14 @@ export default function WorkspaceDashboard({ workspaceId, token }: WorkspaceDash
     try {
       setLoading(true);
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/dashboard`,
+        `${ANALYTICS_BASE_URL}/workspaces/${workspaceId}/dashboard`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setData(response.data);
       setError(null);
     } catch (err: any) {
       console.error('Error loading dashboard:', err);
-      setData(buildMockDashboardData());
+      setData(buildEmptyDashboardData());
       setError(null);
     } finally {
       setLoading(false);

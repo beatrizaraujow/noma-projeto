@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 interface SidebarProps {
   activeItem?: string;
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) =>
         { id: 'dashboard', label: 'Painel', icon: <LayoutDashboard size={20} />, href: `/workspaces/${workspaceId}` },
         { id: 'workspace-dashboard', label: 'Dashboard', icon: <BarChart3 size={20} />, href: `/workspaces/${workspaceId}/dashboard` },
         { id: 'analytics', label: 'Análises', icon: <BarChart3 size={20} />, href: `/workspaces/${workspaceId}/analytics` },
+        { id: 'import', label: 'Importar CSV', icon: <ChevronRight size={20} />, href: `/workspaces/${workspaceId}/import` },
         { id: 'deals', label: 'Meus negócios', icon: <Briefcase size={20} />, href: `/workspaces/${workspaceId}/projects` },
         { id: 'customers', label: 'Clientes', icon: <Users size={20} />, href: `/workspaces/${workspaceId}/invoices` },
       ]
@@ -121,7 +123,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) =>
 
       {/* Logout */}
       <div className="p-4 border-t border-gray-800">
-        <button className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-[#25252b] transition-all w-full">
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-[#25252b] transition-all w-full"
+        >
           <LogOut size={20} />
           <span className="text-sm font-medium">Sair</span>
         </button>

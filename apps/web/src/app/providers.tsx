@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { useState } from 'react';
 import { ToastProvider } from '@/components/common/toast';
 import { OnboardingProvider } from '@/components/features/onboarding';
+import { ErrorTrackingInitializer } from '@/components/common/ErrorTrackingInitializer';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -45,6 +46,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <ToastProvider>
             <OnboardingProvider>
+              <ErrorTrackingInitializer />
               {children}
             </OnboardingProvider>
           </ToastProvider>

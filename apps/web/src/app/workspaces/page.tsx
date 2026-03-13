@@ -2,13 +2,51 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { getSessionWorkspaceId, resolveWorkspaceIdFromApi } from '@/lib/workspace-routing';
 
 export default function WorkspacesPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
-    router.replace('/workspaces/1/dashboard');
-  }, [router]);
+    let cancelled = false;
+
+    const resolveRoute = async () => {
+      if (status === 'loading') {
+        return;
+      }
+
+      if (status === 'unauthenticated') {
+        router.replace('/login');
+        return;
+      }
+
+      const sessionWorkspaceId = getSessionWorkspaceId(session);
+      if (sessionWorkspaceId) {
+        router.replace(`/workspaces/${sessionWorkspaceId}/dashboard`);
+        return;
+      }
+
+      const workspaceId = await resolveWorkspaceIdFromApi();
+      if (cancelled) {
+        return;
+      }
+
+      if (workspaceId) {
+        router.replace(`/workspaces/${workspaceId}/dashboard`);
+        return;
+      }
+
+      router.replace('/onboarding');
+    };
+
+    void resolveRoute();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, session, status]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0f0f0f] text-white">

@@ -23,6 +23,8 @@ import { AIModule } from './modules/ai/ai.module';
 import { AutomationModule } from './modules/automation/automation.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
+import { ImportsModule } from './modules/imports/imports.module';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { IntegrationsModule } from './modules/integrations/integrations.module';
     AutomationModule,
     WorkflowModule,
     IntegrationsModule,
+    MonitoringModule,
+    ImportsModule,
     WebsocketModule,
   ],
   controllers: [AppController],

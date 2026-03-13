@@ -10,9 +10,10 @@ import { FigmaService } from './services/figma.service';
 import { CloudStorageService } from './services/cloud-storage.service';
 import { WebhookService } from './services/webhook.service';
 import { DatabaseModule } from '../database/database.module';
+import { WorkspacesModule } from '../workspaces/workspaces.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, WorkspacesModule],
   controllers: [IntegrationsController],
   providers: [
     IntegrationsService,

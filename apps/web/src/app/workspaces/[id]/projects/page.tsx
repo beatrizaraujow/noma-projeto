@@ -41,54 +41,6 @@ export default function ProjectsPage() {
   ];
 
   const [projects, setProjects] = useState<Project[]>([
-    {
-      id: '1',
-      name: 'Redesign do Website',
-      description: 'Renovação completa do site com UI/UX moderno',
-      status: 'active',
-      priority: 'high',
-      progress: 65,
-      members: 3,
-      tasksCount: 24,
-      completedTasks: 16,
-      dueDate: '15/02/2026',
-    },
-    {
-      id: '2',
-      name: 'Desenvolvimento App Mobile',
-      description: 'App iOS e Android para engajamento do cliente',
-      status: 'active',
-      priority: 'high',
-      progress: 45,
-      members: 2,
-      tasksCount: 32,
-      completedTasks: 14,
-      dueDate: '01/03/2026',
-    },
-    {
-      id: '3',
-      name: 'Campanha Marketing Q1',
-      description: 'Iniciativas de marketing do primeiro trimestre',
-      status: 'on-hold',
-      priority: 'medium',
-      progress: 30,
-      members: 1,
-      tasksCount: 15,
-      completedTasks: 4,
-      dueDate: '31/03/2026',
-    },
-    {
-      id: '4',
-      name: 'Integração API',
-      description: 'Integrações de API de terceiros para sincronização',
-      status: 'completed',
-      priority: 'low',
-      progress: 100,
-      members: 2,
-      tasksCount: 12,
-      completedTasks: 12,
-      dueDate: '20/01/2026',
-    },
   ]);
 
   const createProject = () => {
@@ -138,7 +90,6 @@ export default function ProjectsPage() {
             <MetricCard
               title="Ativos"
               value={projects.filter(p => p.status === 'active').length}
-              trend={{ value: 2, direction: 'up' }}
               subtitle="Em andamento"
               icon={<Clock size={20} />}
               iconBgColor="bg-green-500/20"
@@ -157,7 +108,6 @@ export default function ProjectsPage() {
             <MetricCard
               title="Concluídos"
               value={projects.filter(p => p.status === 'completed').length}
-              trend={{ value: 1, direction: 'up' }}
               subtitle="Finalizados"
               icon={<CheckCircle2 size={20} />}
               iconBgColor="bg-blue-500/20"
@@ -298,6 +248,12 @@ export default function ProjectsPage() {
                 </Button>
               </div>
             ))}
+            {projects.length === 0 && (
+              <div className="md:col-span-2 lg:col-span-3 text-center py-12 bg-[#1a1a1f] border border-gray-800 rounded-xl">
+                <FolderKanban className="mx-auto text-gray-600 mb-3" size={36} />
+                <p className="text-gray-400">Nenhum projeto cadastrado.</p>
+              </div>
+            )}
           </div>
         </MainContent>
       </div>

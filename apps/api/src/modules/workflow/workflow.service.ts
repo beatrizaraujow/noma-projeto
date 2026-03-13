@@ -1,10 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class WorkflowService {
   constructor(private prisma: PrismaService) {}
+
+  private async assertWorkspaceAccess(workspaceId: string, userId: string): Promise<void> {
+    const membership = await this.prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        userId,
+      },
+      select: { userId: true },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('Access denied for this workspace');
+    }
+  }
+
+  private async getAuthorizedWorkflow(workflowId: string, userId: string) {
+    const workflow = await this.prisma.workflow.findUnique({
+      where: { id: workflowId },
+      select: { id: true, workspaceId: true },
+    });
+
+    if (!workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await this.assertWorkspaceAccess(workflow.workspaceId, userId);
+    return workflow;
+  }
 
   // ==================== WORKFLOW MANAGEMENT ====================
 
@@ -17,7 +45,9 @@ export class WorkflowService {
     trigger: any;
     steps: any[];
     createdBy: string;
-  }) {
+  }, userId: string) {
+    await this.assertWorkspaceAccess(data.workspaceId, userId);
+
     const workflow = await this.prisma.workflow.create({
       data: {
         workspaceId: data.workspaceId,
@@ -46,10 +76,12 @@ export class WorkflowService {
       });
     }
 
-    return this.getWorkflow(workflow.id);
+    return this.getWorkflow(workflow.id, userId);
   }
 
-  async getWorkflow(workflowId: string) {
+  async getWorkflow(workflowId: string, userId: string) {
+    await this.getAuthorizedWorkflow(workflowId, userId);
+
     return this.prisma.workflow.findUnique({
       where: { id: workflowId },
       include: {
@@ -60,7 +92,9 @@ export class WorkflowService {
     });
   }
 
-  async listWorkflows(workspaceId: string) {
+  async listWorkflows(workspaceId: string, userId: string) {
+    await this.assertWorkspaceAccess(workspaceId, userId);
+
     return this.prisma.workflow.findMany({
       where: { workspaceId },
       include: {
@@ -86,7 +120,10 @@ export class WorkflowService {
       active?: boolean;
       steps?: any[];
     },
+    userId: string,
   ) {
+    await this.getAuthorizedWorkflow(workflowId, userId);
+
     // Update workflow
     const workflow = await this.prisma.workflow.update({
       where: { id: workflowId },
@@ -125,10 +162,12 @@ export class WorkflowService {
       }
     }
 
-    return this.getWorkflow(workflowId);
+    return this.getWorkflow(workflowId, userId);
   }
 
-  async deleteWorkflow(workflowId: string) {
+  async deleteWorkflow(workflowId: string, userId: string) {
+    await this.getAuthorizedWorkflow(workflowId, userId);
+
     return this.prisma.workflow.delete({
       where: { id: workflowId },
     });
@@ -136,8 +175,8 @@ export class WorkflowService {
 
   // ==================== WORKFLOW EXECUTION ====================
 
-  async executeWorkflow(workflowId: string, input?: any, triggeredBy?: string) {
-    const workflow = await this.getWorkflow(workflowId);
+  async executeWorkflow(workflowId: string, userId: string, input?: any, triggeredBy?: string) {
+    const workflow = await this.getWorkflow(workflowId, userId);
     if (!workflow || !workflow.active) {
       throw new Error('Workflow not found or inactive');
     }
@@ -434,7 +473,10 @@ export class WorkflowService {
     workflowId: string;
     name: string;
     createdBy: string;
-  }) {
+  }, userId: string) {
+    await this.assertWorkspaceAccess(data.workspaceId, userId);
+    await this.getAuthorizedWorkflow(data.workflowId, userId);
+
     const url = `webhook_${crypto.randomBytes(16).toString('hex')}`;
     const secret = crypto.randomBytes(32).toString('hex');
 
@@ -450,14 +492,27 @@ export class WorkflowService {
     });
   }
 
-  async listWebhookTriggers(workspaceId: string) {
+  async listWebhookTriggers(workspaceId: string, userId: string) {
+    await this.assertWorkspaceAccess(workspaceId, userId);
+
     return this.prisma.webhookTrigger.findMany({
       where: { workspaceId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async deleteWebhookTrigger(triggerId: string) {
+  async deleteWebhookTrigger(triggerId: string, userId: string) {
+    const trigger = await this.prisma.webhookTrigger.findUnique({
+      where: { id: triggerId },
+      select: { id: true, workspaceId: true },
+    });
+
+    if (!trigger) {
+      throw new Error('Webhook trigger not found');
+    }
+
+    await this.assertWorkspaceAccess(trigger.workspaceId, userId);
+
     return this.prisma.webhookTrigger.delete({
       where: { id: triggerId },
     });
@@ -541,16 +596,31 @@ export class WorkflowService {
 
   // ==================== WORKFLOW EXECUTIONS ====================
 
-  async getWorkflowExecution(executionId: string) {
-    return this.prisma.workflowExecution.findUnique({
+  async getWorkflowExecution(executionId: string, userId: string) {
+    const execution = await this.prisma.workflowExecution.findUnique({
       where: { id: executionId },
       include: {
-        workflow: true,
+        workflow: {
+          select: {
+            id: true,
+            workspaceId: true,
+            name: true,
+          },
+        },
       },
     });
+
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+
+    await this.assertWorkspaceAccess(execution.workflow.workspaceId, userId);
+    return execution;
   }
 
-  async listWorkflowExecutions(workflowId: string, limit = 50) {
+  async listWorkflowExecutions(workflowId: string, userId: string, limit = 50) {
+    await this.getAuthorizedWorkflow(workflowId, userId);
+
     return this.prisma.workflowExecution.findMany({
       where: { workflowId },
       orderBy: { startedAt: 'desc' },
@@ -558,7 +628,13 @@ export class WorkflowService {
     });
   }
 
-  async cancelWorkflowExecution(executionId: string) {
+  async cancelWorkflowExecution(executionId: string, userId: string) {
+    const execution = await this.getWorkflowExecution(executionId, userId);
+
+    if (execution.status !== 'running') {
+      throw new Error('Only running executions can be cancelled');
+    }
+
     return this.prisma.workflowExecution.update({
       where: { id: executionId },
       data: {
@@ -567,4 +643,5 @@ export class WorkflowService {
       },
     });
   }
+
 }

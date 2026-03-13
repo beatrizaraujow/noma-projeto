@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import { Sidebar, Header, MainContent } from '@/components/layout';
 import { MetricCard } from '@/components/features/dashboard';
 import { Badge, Button } from '@/components/common';
@@ -25,8 +24,6 @@ interface Invoice {
 }
 
 export default function InvoicesPage() {
-  const params = useParams();
-  const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const [newInvoice, setNewInvoice] = useState({ client: '', amount: '', dueDate: '' });
   const [activeTab, setActiveTab] = useState('all');
@@ -38,10 +35,6 @@ export default function InvoicesPage() {
   ];
 
   const [invoices, setInvoices] = useState<Invoice[]>([
-    { id: '1', number: 'INV-2026-001', client: 'Empresa Alpha', amount: 5400, status: 'paid', dueDate: '2026-02-01', issueDate: '2026-01-15' },
-    { id: '2', number: 'INV-2026-002', client: 'Beta Solutions', amount: 3200, status: 'pending', dueDate: '2026-02-15', issueDate: '2026-02-01' },
-    { id: '3', number: 'INV-2026-003', client: 'Gamma Tech', amount: 7800, status: 'overdue', dueDate: '2026-01-30', issueDate: '2026-01-10' },
-    { id: '4', number: 'INV-2026-004', client: 'Delta Corp', amount: 4500, status: 'pending', dueDate: '2026-02-20', issueDate: '2026-02-05' },
   ]);
 
   const createInvoice = () => {

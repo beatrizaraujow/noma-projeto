@@ -1,5 +1,5 @@
 // Service Worker para PWA - Versão otimizada
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '1.0.1';
 const CACHE_NAME = `numa-static-v${CACHE_VERSION}`;
 const RUNTIME_CACHE = `numa-runtime-v${CACHE_VERSION}`;
 const IMAGE_CACHE = `numa-images-v${CACHE_VERSION}`;
@@ -7,7 +7,6 @@ const IMAGE_CACHE = `numa-images-v${CACHE_VERSION}`;
 // Arquivos para cache offline
 const STATIC_CACHE_URLS = [
   '/',
-  '/login',
   '/manifest.json',
   '/offline.html',
 ];
