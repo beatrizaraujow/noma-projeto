@@ -47,10 +47,22 @@ The Dashboard & Analytics feature provides comprehensive workspace insights, inc
   - Workspace Overview
   - Project Progress
   - Team Productivity
+  - Signup Metrics
 
 **Component**: `CustomDashboardWidgets.tsx`
 
-### ✅ 5. Export Reports
+### ✅ 5. Signup Metrics
+- **Total Signups**: Total new users in selected period
+- **Breakdown by Method**: Email, Google, and unknown
+- **Breakdown by Source**: UTM/source/invite attribution rollup
+- **Daily Series**: Signup count by day
+- **Activation Funnel**: Signed up, created project, first task engaged, activation rate
+
+**API Endpoint**: `GET /analytics/workspaces/:workspaceId/signups?days=30`
+
+**Component**: `SignupMetricsWidget.tsx`
+
+### ✅ 6. Export Reports
 - **CSV Export**: Complete dashboard data in CSV format
 - **JSON Export**: Raw data export for further processing
 - **PDF Export**: Print-friendly formatted reports with:
@@ -73,6 +85,7 @@ The Dashboard & Analytics feature provides comprehensive workspace insights, inc
 - `getWorkspaceDashboard()` - Overview metrics and recent activity
 - `getProjectProgress()` - Per-project progress and task distribution
 - `getTeamProductivity()` - Individual member metrics and team averages
+- `getSignupMetrics()` - Signup volume, attribution, daily trend, and activation funnel
 - `getActivityTrend()` - Activity trend data over time
 - `getTaskDistribution()` - Task breakdown by status and priority
 - `exportDashboardData()` - Complete data export for reporting
@@ -85,6 +98,7 @@ The Dashboard & Analytics feature provides comprehensive workspace insights, inc
 - `GET /analytics/workspaces/:workspaceId/dashboard`
 - `GET /analytics/workspaces/:workspaceId/project-progress`
 - `GET /analytics/workspaces/:workspaceId/team-productivity`
+- `GET /analytics/workspaces/:workspaceId/signups?days=30`
 - `GET /analytics/workspaces/:workspaceId/activity-trend?days=30`
 - `GET /analytics/workspaces/:workspaceId/task-distribution`
 - `GET /analytics/workspaces/:workspaceId/export?format=csv|json`

@@ -46,6 +46,16 @@ export class AnalyticsController {
     return this.analyticsService.getTaskDistribution(workspaceId, req.user.userId);
   }
 
+  @Get('workspaces/:workspaceId/signups')
+  async getSignupMetrics(
+    @Param('workspaceId') workspaceId: string,
+    @Query('days') days: string,
+    @Req() req: any,
+  ) {
+    const daysNumber = days ? parseInt(days, 10) : 30;
+    return this.analyticsService.getSignupMetrics(workspaceId, req.user.userId, daysNumber);
+  }
+
   @Get('workspaces/:workspaceId/export')
   async exportDashboard(
     @Param('workspaceId') workspaceId: string,

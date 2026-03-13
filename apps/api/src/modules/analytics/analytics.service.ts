@@ -1,9 +1,133 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
+type SignupMethod = 'email' | 'google' | 'unknown';
+
+type SignupEventMetadata = {
+  method: SignupMethod;
+  workspaceId: string | null;
+  source: string | null;
+  utmSource: string | null;
+  campaign: string | null;
+  inviteToken: string | null;
+};
+
 @Injectable()
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
+
+  async getSignupMetrics(workspaceId: string, userId: string, days: number = 30) {
+    await this.verifyWorkspaceAccess(workspaceId, userId);
+
+    const periodDays = Number.isFinite(days) ? Math.min(Math.max(days, 1), 365) : 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - periodDays);
+
+    const signupLogs = await this.prisma.auditLog.findMany({
+      where: {
+        action: 'signup',
+        resource: 'auth',
+        createdAt: { gte: startDate },
+      },
+      select: {
+        userId: true,
+        createdAt: true,
+        metadata: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const workspaceSignups = signupLogs.filter((log) => {
+      const metadata = this.extractSignupMetadata(log.metadata);
+      return metadata.workspaceId === workspaceId;
+    });
+
+    const byMethod: Record<SignupMethod, number> = {
+      email: 0,
+      google: 0,
+      unknown: 0,
+    };
+
+    const bySourceMap = new Map<string, number>();
+    const dailyMap = new Map<string, number>();
+    const signupUserIds = new Set<string>();
+
+    for (const signup of workspaceSignups) {
+      signupUserIds.add(signup.userId);
+
+      const metadata = this.extractSignupMetadata(signup.metadata);
+      byMethod[metadata.method] = (byMethod[metadata.method] || 0) + 1;
+
+      const sourceLabel =
+        metadata.utmSource ||
+        metadata.campaign ||
+        metadata.source ||
+        (metadata.inviteToken ? 'invite' : 'unknown');
+      bySourceMap.set(sourceLabel, (bySourceMap.get(sourceLabel) || 0) + 1);
+
+      const dateLabel = signup.createdAt.toISOString().split('T')[0];
+      dailyMap.set(dateLabel, (dailyMap.get(dateLabel) || 0) + 1);
+    }
+
+    const userIds = [...signupUserIds];
+
+    let createdProject = 0;
+    let firstTaskEngaged = 0;
+
+    if (userIds.length > 0) {
+      const [projectOwners, taskAssignees] = await Promise.all([
+        this.prisma.project.findMany({
+          where: {
+            workspaceId,
+            ownerId: { in: userIds },
+          },
+          select: {
+            ownerId: true,
+          },
+          distinct: ['ownerId'],
+        }),
+        this.prisma.task.findMany({
+          where: {
+            project: { workspaceId },
+            assigneeId: { in: userIds },
+          },
+          select: {
+            assigneeId: true,
+          },
+          distinct: ['assigneeId'],
+        }),
+      ]);
+
+      createdProject = projectOwners.length;
+      firstTaskEngaged = taskAssignees.filter((entry) => Boolean(entry.assigneeId)).length;
+    }
+
+    const totalSignups = workspaceSignups.length;
+    const activationRate =
+      totalSignups > 0
+        ? Math.round((firstTaskEngaged / totalSignups) * 1000) / 10
+        : 0;
+
+    return {
+      periodDays,
+      startDate: startDate.toISOString(),
+      endDate: new Date().toISOString(),
+      totalSignups,
+      byMethod,
+      bySource: [...bySourceMap.entries()]
+        .map(([source, count]) => ({ source, count }))
+        .sort((a, b) => b.count - a.count),
+      daily: [...dailyMap.entries()]
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+      activationFunnel: {
+        signedUp: totalSignups,
+        createdProject,
+        firstTaskEngaged,
+        activationRate,
+      },
+    };
+  }
 
   async getWorkspaceDashboard(workspaceId: string, userId: string) {
     // Verify user access
@@ -390,7 +514,7 @@ export class AnalyticsService {
       where: {
         id: workspaceId,
         members: {
-          some: { id: userId },
+          some: { userId },
         },
       },
     });
@@ -398,5 +522,37 @@ export class AnalyticsService {
     if (!membership) {
       throw new Error('Access denied to workspace');
     }
+  }
+
+  private extractSignupMetadata(metadata: unknown): SignupEventMetadata {
+    const safeMethod = (value: unknown): SignupMethod => {
+      if (value === 'email' || value === 'google') {
+        return value;
+      }
+
+      return 'unknown';
+    };
+
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return {
+        method: 'unknown',
+        workspaceId: null,
+        source: null,
+        utmSource: null,
+        campaign: null,
+        inviteToken: null,
+      };
+    }
+
+    const typed = metadata as Record<string, unknown>;
+
+    return {
+      method: safeMethod(typed.method),
+      workspaceId: typeof typed.workspaceId === 'string' ? typed.workspaceId : null,
+      source: typeof typed.source === 'string' ? typed.source : null,
+      utmSource: typeof typed.utmSource === 'string' ? typed.utmSource : null,
+      campaign: typeof typed.campaign === 'string' ? typed.campaign : null,
+      inviteToken: typeof typed.inviteToken === 'string' ? typed.inviteToken : null,
+    };
   }
 }
