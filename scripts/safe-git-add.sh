@@ -51,8 +51,6 @@ git add turbo.json
 git add tsconfig.json
 
 # Deploy guides (seguros - sem secrets)
-git add README_DEPLOY.md
-git add DEPLOY_STUDY.md
 git add SECURITY_DEPLOY.md
 git add .env.example
 
@@ -65,7 +63,6 @@ git add docs/
 git add scripts/
 
 # Configuration (sem secrets)
-git add docker-compose.yml
 git add nginx.conf
 git add ecosystem.config.js
 

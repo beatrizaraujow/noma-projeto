@@ -22,7 +22,6 @@ O **NOMA** reúne:
 - CRUD de Usuários, Projetos e Tarefas
 - Atualizações em tempo real (WebSocket)
 - Documentação de API (Swagger)
-- Ambiente de desenvolvimento com Docker Compose
 - Monorepo (Turborepo) com pacotes compartilhados
 
 ---
@@ -43,7 +42,6 @@ O **NOMA** reúne:
 
 **Dados/Infra**
 - Prisma + PostgreSQL
-- Docker / Docker Compose
 - Redis / MongoDB / Elasticsearch (dependendo do setup)
 
 ---
@@ -60,6 +58,5 @@ O **NOMA** reúne:
 │   ├── ui/           # Componentes compartilhados
 │   ├── types/        # Tipos TypeScript compartilhados
 │   └── config/       # Configurações compartilhadas
-├── docker-compose.yml
 ├── turbo.json
 └── package.json

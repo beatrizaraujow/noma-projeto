@@ -13,7 +13,6 @@ Install these VS Code extensions for the best development experience:
 ### Nice to Have
 - [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss) - Tailwind autocomplete
 - [GitLens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens) - Git supercharged
-- [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) - Docker support
 - [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) - Test APIs
 - [Thunder Client](https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client) - Alternative to Postman
 

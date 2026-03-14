@@ -166,12 +166,10 @@
 
 ### Para usar as novas integrações:
 
-1. **Iniciar o banco de dados:**
+1. **Preparar o banco local:**
    ```bash
-   # Se usando Docker
-   docker-compose up -d postgres
-   
-   # Ou iniciar PostgreSQL localmente
+   cd packages/database
+   npx prisma db push
    ```
 
 2. **Aplicar migração:**

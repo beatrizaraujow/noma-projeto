@@ -45,12 +45,11 @@ git push -u origin main
 feat: Complete deploy setup and production optimization
 
 - Added comprehensive deploy documentation
-- Created production Docker setup
 - Implemented Nginx configuration
 - Added PM2 ecosystem config
 - Created GitHub Actions CI/CD workflow
 - Fixed Prisma schema and TypeScript errors
-- Updated Next.js config for Docker
+- Updated Next.js production config
 - 189 files, 34,451+ lines of code
 ```
 

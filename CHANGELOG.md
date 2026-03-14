@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redis for caching and sessions
 - Elasticsearch for advanced search
 - WebSocket support with Socket.io for real-time features
-- Docker Compose configuration for development
 - CI/CD pipelines with GitHub Actions
 - Comprehensive test setup (Jest + Cypress)
 - API documentation with Swagger/OpenAPI

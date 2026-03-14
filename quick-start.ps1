@@ -1,4 +1,4 @@
-# Quick Start - Apenas inicia os servidores (assume que Docker já está rodando)
+# Quick Start - Apenas inicia os servidores locais
 
 Write-Host "⚡ Quick Start - NOMA Project" -ForegroundColor Cyan
 Write-Host ""

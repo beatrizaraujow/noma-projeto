@@ -13,6 +13,7 @@ NC='\033[0m'
 
 API_URL=${API_URL:-http://localhost:3001}
 WEB_URL=${WEB_URL:-http://localhost:3000}
+SQLITE_DB_PATH=${SQLITE_DB_PATH:-packages/database/prisma/dev.db}
 
 echo "🏥 Running health checks..."
 echo ""
@@ -35,28 +36,13 @@ else
     exit 1
 fi
 
-# Check PostgreSQL
-echo -n "Checking PostgreSQL... "
-if docker ps | grep -q postgres; then
+# Check SQLite
+echo -n "Checking SQLite DB ($SQLITE_DB_PATH)... "
+if [ -f "$SQLITE_DB_PATH" ]; then
     echo -e "${GREEN}✅ OK${NC}"
 else
-    echo -e "${YELLOW}⚠️  Not running via Docker${NC}"
-fi
-
-# Check Redis
-echo -n "Checking Redis... "
-if docker ps | grep -q redis; then
-    echo -e "${GREEN}✅ OK${NC}"
-else
-    echo -e "${YELLOW}⚠️  Not running via Docker${NC}"
-fi
-
-# Check MongoDB
-echo -n "Checking MongoDB... "
-if docker ps | grep -q mongodb; then
-    echo -e "${GREEN}✅ OK${NC}"
-else
-    echo -e "${YELLOW}⚠️  Not running via Docker${NC}"
+    echo -e "${RED}❌ FAILED${NC}"
+    exit 1
 fi
 
 echo ""

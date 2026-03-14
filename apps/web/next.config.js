@@ -130,7 +130,7 @@ const nextConfig = {
     optimizePackageImports: ['@nexora/ui', 'lucide-react'],
   },
   
-  // Output standalone for Docker
+  // Output standalone for production runtime
   output: 'standalone',
 };
 

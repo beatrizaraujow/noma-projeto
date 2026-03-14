@@ -54,11 +54,6 @@ next-env.d.ts
 *.db-journal
 uploads/
 
-# Docker volumes
-postgres_data/
-mongodb_data/
-redis_data/
-
 # OS
 Thumbs.db
 .DS_Store
@@ -66,9 +61,6 @@ Thumbs.db
 # Database
 *.db
 *.db-journal
-
-# Docker
-docker-data/
 
 # Turbo
 .turbo/
