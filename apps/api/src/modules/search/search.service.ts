@@ -9,9 +9,6 @@ export class SearchService {
   async search(searchDto: SearchDto, userId: string) {
     const { query, entityType, workspaceId, limit, offset } = searchDto;
 
-    // Build search term for PostgreSQL full-text search
-    const searchTerm = query.trim().split(' ').join(' & ');
-
     const results: any = {
       tasks: [],
       projects: [],
@@ -50,8 +47,8 @@ export class SearchService {
           workspaceId: { in: workspaceIds },
         },
         OR: [
-          { title: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
+          { title: { contains: query } },
+          { description: { contains: query } },
         ],
       },
       include: {
@@ -86,8 +83,8 @@ export class SearchService {
       where: {
         workspaceId: { in: workspaceIds },
         OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
+          { name: { contains: query } },
+          { description: { contains: query } },
         ],
       },
       include: {
@@ -122,7 +119,7 @@ export class SearchService {
             workspaceId: { in: workspaceIds },
           },
         },
-        content: { contains: query, mode: 'insensitive' },
+        content: { contains: query },
       },
       include: {
         task: {

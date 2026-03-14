@@ -108,9 +108,9 @@ export class FigmaService {
           version: fileData.version,
           thumbnail: thumbnail || undefined,
           lastSynced: new Date(),
-          metadata: {
+          metadata: JSON.stringify({
             lastModified: fileData.lastModified,
-          },
+          }),
         },
         create: {
           workspaceId,
@@ -122,9 +122,9 @@ export class FigmaService {
           embedUrl,
           thumbnail: thumbnail || null,
           version: fileData.version,
-          metadata: {
+          metadata: JSON.stringify({
             lastModified: fileData.lastModified,
-          },
+          }),
           createdBy,
         },
       });
@@ -173,9 +173,9 @@ export class FigmaService {
           version: fileData.version,
           thumbnail: thumbnail || undefined,
           lastSynced: new Date(),
-          metadata: {
+          metadata: JSON.stringify({
             lastModified: fileData.lastModified,
-          },
+          }),
         },
       });
 

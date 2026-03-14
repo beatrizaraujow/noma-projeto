@@ -293,9 +293,9 @@ export class CloudStorageService {
             thumbnailUrl: fileData.thumbnailLink || null,
             fileSize: fileData.size ? parseInt(fileData.size) : null,
             sharedLink: shareLink,
-            metadata: {
+            metadata: JSON.stringify({
               modifiedTime: fileData.modifiedTime,
-            },
+            }),
             createdBy,
           },
         });
@@ -334,10 +334,10 @@ export class CloudStorageService {
             fileUrl: shareLink,
             fileSize: fileData.size,
             sharedLink: shareLink,
-            metadata: {
+            metadata: JSON.stringify({
               path: fileData.path_display,
               modified: fileData.client_modified,
-            },
+            }),
             createdBy,
           },
         });

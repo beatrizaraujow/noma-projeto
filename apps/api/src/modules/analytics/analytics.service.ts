@@ -533,7 +533,9 @@ export class AnalyticsService {
       return 'unknown';
     };
 
-    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    const parsedMetadata = this.normalizeMetadataValue(metadata);
+
+    if (!parsedMetadata) {
       return {
         method: 'unknown',
         workspaceId: null,
@@ -544,7 +546,7 @@ export class AnalyticsService {
       };
     }
 
-    const typed = metadata as Record<string, unknown>;
+    const typed = parsedMetadata as Record<string, unknown>;
 
     return {
       method: safeMethod(typed.method),
@@ -554,5 +556,28 @@ export class AnalyticsService {
       campaign: typeof typed.campaign === 'string' ? typed.campaign : null,
       inviteToken: typeof typed.inviteToken === 'string' ? typed.inviteToken : null,
     };
+  }
+
+  private normalizeMetadataValue(metadata: unknown): Record<string, unknown> | null {
+    if (!metadata) {
+      return null;
+    }
+
+    if (typeof metadata === 'string') {
+      try {
+        const parsed = JSON.parse(metadata);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    if (typeof metadata === 'object' && !Array.isArray(metadata)) {
+      return metadata as Record<string, unknown>;
+    }
+
+    return null;
   }
 }

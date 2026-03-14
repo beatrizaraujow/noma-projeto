@@ -112,7 +112,7 @@ export class UsersService {
         resource: 'auth',
         resourceId: userId,
         description: `User signup via ${method}`,
-        metadata: {
+        metadata: JSON.stringify({
           method,
           name,
           email,
@@ -122,7 +122,7 @@ export class UsersService {
           campaign: origin?.campaign || null,
           inviteToken: origin?.inviteToken || null,
           recordedAt: new Date().toISOString(),
-        },
+        }),
       },
     });
   }

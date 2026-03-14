@@ -36,7 +36,7 @@ export class IntegrationsService {
         name: data.name,
         description: data.description,
         active: data.active ?? true,
-        config: data.config,
+        config: this.serializeJson(data.config),
         createdBy: data.createdBy,
       },
     });
@@ -63,7 +63,7 @@ export class IntegrationsService {
       const updatedIntegration = await (this.prisma as any).integration.update({
         where: { id: integration.id },
         data: {
-          config: updatedConfig,
+          config: this.serializeJson(updatedConfig),
         },
       });
 
@@ -75,17 +75,17 @@ export class IntegrationsService {
       );
 
       await this.createLog(integration.id, 'integration_created', 'success', 'Integration created successfully');
-      return updatedIntegration;
+      return this.normalizeIntegration(updatedIntegration);
     }
 
     // Log creation
     await this.createLog(integration.id, 'integration_created', 'success', 'Integration created successfully');
 
-    return integration;
+    return this.normalizeIntegration(integration);
   }
 
   async findAll(workspaceId: string) {
-    return (this.prisma as any).integration.findMany({
+    const integrations = await (this.prisma as any).integration.findMany({
       where: { workspaceId },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -94,6 +94,8 @@ export class IntegrationsService {
         },
       },
     });
+
+    return integrations.map((integration: any) => this.normalizeIntegration(integration));
   }
 
   async findOne(id: string) {
@@ -111,7 +113,7 @@ export class IntegrationsService {
       throw new NotFoundException('Integration not found');
     }
 
-    return integration;
+    return this.normalizeIntegration(integration);
   }
 
   async update(id: string, data: UpdateIntegrationDto) {
@@ -121,14 +123,19 @@ export class IntegrationsService {
       this.validateConfig(integration.type, data.config);
     }
 
+    const updateData: any = {
+      ...data,
+      config: data.config ? this.serializeJson(data.config) : undefined,
+    };
+
     const updated = await (this.prisma as any).integration.update({
       where: { id },
-      data,
+      data: updateData,
     });
 
     await this.createLog(id, 'integration_updated', 'success', 'Integration updated successfully');
 
-    return updated;
+    return this.normalizeIntegration(updated);
   }
 
   async remove(id: string) {
@@ -185,7 +192,7 @@ export class IntegrationsService {
   }
 
   async getLogs(integrationId: string, options: { limit?: number; status?: string }) {
-    return (this.prisma as any).integrationLog.findMany({
+    const logs = await (this.prisma as any).integrationLog.findMany({
       where: {
         integrationId,
         ...(options.status && { status: options.status }),
@@ -193,6 +200,8 @@ export class IntegrationsService {
       orderBy: { createdAt: 'desc' },
       take: options.limit || 50,
     });
+
+    return logs.map((log: any) => this.normalizeIntegrationLog(log));
   }
 
   async sendSlackNotification(integrationId: string, message: string, channel?: string) {
@@ -552,8 +561,47 @@ export class IntegrationsService {
         action,
         status,
         message,
-        metadata,
+        metadata: metadata ? this.serializeJson(metadata) : null,
       },
     });
+  }
+
+  private normalizeIntegration<T extends { config: string; logs?: any[] }>(integration: T): any {
+    return {
+      ...integration,
+      config: this.parseJson(integration.config, {}),
+      logs: integration.logs?.map((log) => this.normalizeIntegrationLog(log)),
+    };
+  }
+
+  private normalizeIntegrationLog<T extends { metadata?: string | null }>(log: T): any {
+    return {
+      ...log,
+      metadata: this.parseJson(log.metadata, null),
+    };
+  }
+
+  private serializeJson(value: any, fallback = '{}'): string {
+    if (value === undefined || value === null) {
+      return fallback;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  private parseJson(value: string | null | undefined, fallback: any): any {
+    if (!value) {
+      return fallback;
+    }
+
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
   }
 }

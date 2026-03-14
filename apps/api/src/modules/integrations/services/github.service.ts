@@ -87,10 +87,10 @@ export class GitHubService {
           prUpdatedAt: new Date(prData.updated_at),
           prMergedAt: prData.merged_at ? new Date(prData.merged_at) : null,
           syncedAt: new Date(),
-          metadata: {
+            metadata: JSON.stringify({
             labels: prData.labels,
             assignees: prData.assignees,
-          },
+            }),
         },
         create: {
           workspaceId,
@@ -105,10 +105,10 @@ export class GitHubService {
           prCreatedAt: new Date(prData.created_at),
           prUpdatedAt: new Date(prData.updated_at),
           prMergedAt: prData.merged_at ? new Date(prData.merged_at) : null,
-          metadata: {
+          metadata: JSON.stringify({
             labels: prData.labels,
             assignees: prData.assignees,
-          },
+          }),
         },
       });
 
@@ -177,10 +177,10 @@ export class GitHubService {
               prUpdatedAt: new Date(prData.updated_at),
               prMergedAt: prData.merged_at ? new Date(prData.merged_at) : null,
               syncedAt: new Date(),
-              metadata: {
+              metadata: JSON.stringify({
                 labels: prData.labels,
                 assignees: prData.assignees,
-              },
+              }),
             },
             create: {
               workspaceId,
@@ -194,10 +194,10 @@ export class GitHubService {
               prCreatedAt: new Date(prData.created_at),
               prUpdatedAt: new Date(prData.updated_at),
               prMergedAt: prData.merged_at ? new Date(prData.merged_at) : null,
-              metadata: {
+              metadata: JSON.stringify({
                 labels: prData.labels,
                 assignees: prData.assignees,
-              },
+              }),
             },
           }),
         ),

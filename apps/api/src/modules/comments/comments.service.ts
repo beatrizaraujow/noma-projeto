@@ -52,12 +52,14 @@ export class CommentsService {
       (match) => match[1],
     );
 
+    const mentions = data.mentions || contentMentions;
+
     const comment = await this.prisma.comment.create({
       data: {
         content: data.content,
         taskId: data.taskId,
         authorId: userId,
-        mentions: data.mentions || contentMentions,
+        mentions: this.serializeMentions(mentions),
       },
       include: {
         author: {
@@ -72,6 +74,8 @@ export class CommentsService {
       },
     });
 
+    const normalizedComment = this.normalizeCommentMentions(comment);
+
     // Create activity log
     await this.prisma.activity.create({
       data: {
@@ -80,22 +84,22 @@ export class CommentsService {
         projectId: task.projectId,
         taskId: data.taskId,
         userId,
-        metadata: {
+        metadata: JSON.stringify({
           commentId: comment.id,
           content: data.content.substring(0, 100),
-        },
+        }),
       },
     });
 
     // Broadcast comment to project
-    this.websocketGateway.broadcastCommentAdded(task.projectId, comment);
+    this.websocketGateway.broadcastCommentAdded(task.projectId, normalizedComment);
 
     // Send notifications to mentions
-    if (comment.mentions && comment.mentions.length > 0) {
+    if (normalizedComment.mentions.length > 0) {
       const mentionedUsers = await this.prisma.user.findMany({
         where: {
           name: {
-            in: comment.mentions,
+            in: normalizedComment.mentions,
           },
         },
       });
@@ -105,7 +109,7 @@ export class CommentsService {
           this.websocketGateway.sendNotification(user.id, {
             type: 'mention',
             title: 'Você foi mencionado',
-            message: `${comment.author.name} mencionou você em um comentário`,
+            message: `${normalizedComment.author.name} mencionou você em um comentário`,
             projectId: task.projectId,
             taskId: data.taskId,
             userId: user.id,
@@ -126,7 +130,7 @@ export class CommentsService {
       });
     }
 
-    return comment;
+    return normalizedComment;
   }
 
   async findByTask(taskId: string, userId: string) {
@@ -158,7 +162,7 @@ export class CommentsService {
       throw new ForbiddenException('You do not have access to this task');
     }
 
-    return this.prisma.comment.findMany({
+    const comments = await this.prisma.comment.findMany({
       where: { taskId },
       include: {
         author: {
@@ -175,6 +179,8 @@ export class CommentsService {
         createdAt: 'asc',
       },
     });
+
+    return comments.map((comment) => this.normalizeCommentMentions(comment));
   }
 
   async update(id: string, content: string, userId: string) {
@@ -207,7 +213,7 @@ export class CommentsService {
       where: { id },
       data: {
         content,
-        mentions,
+        mentions: this.serializeMentions(mentions),
       },
       include: {
         author: {
@@ -222,13 +228,15 @@ export class CommentsService {
       },
     });
 
+    const normalizedUpdated = this.normalizeCommentMentions(updated);
+
     // Broadcast update
     this.websocketGateway.broadcastCommentUpdated(
       comment.task.projectId,
-      updated,
+      normalizedUpdated,
     );
 
-    return updated;
+    return normalizedUpdated;
   }
 
   async remove(id: string, userId: string) {
@@ -259,5 +267,36 @@ export class CommentsService {
     this.websocketGateway.broadcastCommentDeleted(comment.task.projectId, id);
 
     return { success: true };
+  }
+
+  private serializeMentions(mentions: string[]): string {
+    const sanitizedMentions = mentions.filter(Boolean);
+    return JSON.stringify([...new Set(sanitizedMentions)]);
+  }
+
+  private normalizeCommentMentions<T extends { mentions: string }>(
+    comment: T,
+  ): Omit<T, 'mentions'> & { mentions: string[] } {
+    return {
+      ...comment,
+      mentions: this.parseMentions(comment.mentions),
+    };
+  }
+
+  private parseMentions(mentions: string | null | undefined): string[] {
+    if (!mentions) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(mentions);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((mention) => typeof mention === 'string');
+      }
+    } catch {
+      return [];
+    }
+
+    return [];
   }
 }

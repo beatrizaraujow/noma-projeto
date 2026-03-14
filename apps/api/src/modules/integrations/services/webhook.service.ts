@@ -51,7 +51,7 @@ export class WebhookService {
           provider,
           url,
           secret: webhookSecret,
-          events,
+          events: this.serializeJson(events, '[]'),
           createdBy,
         },
       });
@@ -71,10 +71,12 @@ export class WebhookService {
    */
   async getEndpoints(workspaceId: string) {
     try {
-      return await (this.prisma as any).webhookEndpoint.findMany({
+      const endpoints = await (this.prisma as any).webhookEndpoint.findMany({
         where: { workspaceId },
         orderBy: { createdAt: 'desc' },
       });
+
+      return endpoints.map((endpoint: any) => this.normalizeEndpoint(endpoint));
     } catch (error) {
       throw new Error(`Failed to fetch endpoints: ${getErrorMessage(error)}`);
     }
@@ -85,9 +87,11 @@ export class WebhookService {
    */
   async getEndpointByUrl(url: string) {
     try {
-      return await (this.prisma as any).webhookEndpoint.findUnique({
+      const endpoint = await (this.prisma as any).webhookEndpoint.findUnique({
         where: { url },
       });
+
+      return endpoint ? this.normalizeEndpoint(endpoint) : endpoint;
     } catch (error) {
       throw new Error(`Failed to fetch endpoint: ${getErrorMessage(error)}`);
     }
@@ -106,14 +110,22 @@ export class WebhookService {
     },
   ) {
     try {
+      const updateData: any = {
+        ...updates,
+        events:
+          updates.events !== undefined
+            ? this.serializeJson(updates.events, '[]')
+            : undefined,
+      };
+
       const endpoint = await (this.prisma as any).webhookEndpoint.update({
         where: { id: endpointId },
-        data: updates,
+        data: updateData,
       });
 
       return {
         success: true,
-        endpoint,
+        endpoint: this.normalizeEndpoint(endpoint),
         message: 'Webhook endpoint updated successfully',
       };
     } catch (error) {
@@ -155,7 +167,7 @@ export class WebhookService {
       });
 
       const matchingEndpoints = endpoints.filter((endpoint: any) => {
-        const events = Array.isArray(endpoint.events) ? endpoint.events : [];
+        const events = this.parseJsonArray(endpoint.events);
         return events.includes(event) || events.includes('*');
       });
 
@@ -236,8 +248,8 @@ export class WebhookService {
         data: {
           endpointId,
           event,
-          payload: webhookPayload,
-          response: responseData ? { body: responseData } : null,
+          payload: this.serializeJson(webhookPayload),
+          response: responseData ? this.serializeJson({ body: responseData }) : null,
           status: response.ok ? 'success' : 'error',
           statusCode: response.status,
           error: response.ok ? null : `HTTP ${response.status}: ${response.statusText}`,
@@ -259,7 +271,7 @@ export class WebhookService {
         data: {
           endpointId,
           event,
-          payload: { event, data: payload },
+          payload: this.serializeJson({ event, data: payload }),
           status: 'error',
           error: getErrorMessage(error),
         },
@@ -296,7 +308,7 @@ export class WebhookService {
         call.endpointId,
         call.endpoint.url,
         call.event,
-        call.payload.data,
+        this.parseJson(call.payload, {}).data,
         call.endpoint.secret,
       );
 
@@ -326,14 +338,61 @@ export class WebhookService {
       const where: any = { endpointId };
       if (options?.status) where.status = options.status;
 
-      return await (this.prisma as any).webhookCall.findMany({
+      const logs = await (this.prisma as any).webhookCall.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         take: options?.limit || 50,
       });
+
+      return logs.map((log: any) => this.normalizeWebhookCall(log));
     } catch (error) {
       throw new Error(`Failed to fetch logs: ${getErrorMessage(error)}`);
     }
+  }
+
+  private normalizeEndpoint<T extends { events: string; config?: string | null }>(endpoint: T): any {
+    return {
+      ...endpoint,
+      events: this.parseJsonArray(endpoint.events),
+      config: endpoint.config ? this.parseJson(endpoint.config, null) : endpoint.config,
+    };
+  }
+
+  private normalizeWebhookCall<T extends { payload: string; response?: string | null }>(call: T): any {
+    return {
+      ...call,
+      payload: this.parseJson(call.payload, {}),
+      response: call.response ? this.parseJson(call.response, null) : call.response,
+    };
+  }
+
+  private serializeJson(value: any, fallback = '{}'): string {
+    if (value === undefined || value === null) {
+      return fallback;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  private parseJson(value: string | null | undefined, fallback: any): any {
+    if (!value) {
+      return fallback;
+    }
+
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  private parseJsonArray(value: string | null | undefined): string[] {
+    const parsed = this.parseJson(value, []);
+    return Array.isArray(parsed) ? parsed : [];
   }
 
   /**

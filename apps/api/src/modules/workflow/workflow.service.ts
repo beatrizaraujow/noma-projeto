@@ -25,7 +25,7 @@ export class WorkflowService {
         description: data.description,
         icon: data.icon,
         color: data.color,
-        trigger: data.trigger,
+        trigger: this.serializeJson(data.trigger, '{}'),
         createdBy: data.createdBy,
       },
     });
@@ -38,7 +38,7 @@ export class WorkflowService {
           workflowId: workflow.id,
           name: step.name,
           type: step.type,
-          config: step.config,
+          config: this.serializeJson(step.config, '{}'),
           position: i,
           parentId: step.parentId,
           nextStepId: step.nextStepId,
@@ -50,7 +50,7 @@ export class WorkflowService {
   }
 
   async getWorkflow(workflowId: string) {
-    return this.prisma.workflow.findUnique({
+    const workflow = await this.prisma.workflow.findUnique({
       where: { id: workflowId },
       include: {
         steps: {
@@ -58,10 +58,12 @@ export class WorkflowService {
         },
       },
     });
+
+    return this.normalizeWorkflow(workflow);
   }
 
   async listWorkflows(workspaceId: string) {
-    return this.prisma.workflow.findMany({
+    const workflows = await this.prisma.workflow.findMany({
       where: { workspaceId },
       include: {
         steps: {
@@ -73,6 +75,8 @@ export class WorkflowService {
       },
       orderBy: { updatedAt: 'desc' },
     });
+
+    return workflows.map((workflow) => this.normalizeWorkflow(workflow));
   }
 
   async updateWorkflow(
@@ -95,7 +99,10 @@ export class WorkflowService {
         description: data.description,
         icon: data.icon,
         color: data.color,
-        trigger: data.trigger,
+        trigger:
+          data.trigger !== undefined
+            ? this.serializeJson(data.trigger, '{}')
+            : undefined,
         active: data.active,
         version: { increment: 1 },
       },
@@ -116,7 +123,7 @@ export class WorkflowService {
             workflowId,
             name: step.name,
             type: step.type,
-            config: step.config,
+            config: this.serializeJson(step.config, '{}'),
             position: i,
             parentId: step.parentId,
             nextStepId: step.nextStepId,
@@ -147,9 +154,9 @@ export class WorkflowService {
       data: {
         workflowId,
         status: 'running',
-        input,
+        input: input !== undefined ? this.serializeJson(input, '{}') : undefined,
         triggeredBy,
-        logs: [],
+        logs: this.serializeJson([], '[]'),
       },
     });
 
@@ -174,8 +181,8 @@ export class WorkflowService {
         data: {
           status: 'completed',
           completedAt: new Date(),
-          output: context.variables,
-          logs: context.logs,
+          output: this.serializeJson(context.variables, '{}'),
+          logs: this.serializeJson(context.logs, '[]'),
         },
       });
 
@@ -190,7 +197,7 @@ export class WorkflowService {
           status: 'failed',
           completedAt: new Date(),
           error: errorMessage,
-          logs: [],
+          logs: this.serializeJson([], '[]'),
         },
       });
 
@@ -399,9 +406,9 @@ export class WorkflowService {
         type: 'notification',
         description: this.interpolate(message, context),
         userId,
-        metadata: {
+        metadata: this.serializeJson({
           title: this.interpolate(title, context),
-        },
+        }),
       },
     });
   }
@@ -425,6 +432,47 @@ export class WorkflowService {
 
       return result;
     });
+  }
+
+  private normalizeWorkflow<T extends { trigger: string; steps: any[] }>(
+    workflow: T | null,
+  ) {
+    if (!workflow) {
+      return workflow;
+    }
+
+    return {
+      ...workflow,
+      trigger: this.parseJson(workflow.trigger, {}),
+      steps: workflow.steps.map((step) => ({
+        ...step,
+        config: this.parseJson(step.config, {}),
+      })),
+    };
+  }
+
+  private serializeJson(value: any, fallback = '{}'): string {
+    if (value === undefined || value === null) {
+      return fallback;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  private parseJson(value: string | null | undefined, fallback: any) {
+    if (!value) {
+      return fallback;
+    }
+
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
   }
 
   // ==================== WEBHOOK TRIGGERS ====================

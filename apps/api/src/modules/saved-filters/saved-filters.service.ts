@@ -12,7 +12,7 @@ export class SavedFiltersService {
         name: data.name,
         description: data.description,
         entityType: data.entityType,
-        filters: data.filters,
+        filters: JSON.stringify(data.filters),
         userId,
         workspaceId: data.workspaceId,
         isPublic: data.isPublic || false,
@@ -36,12 +36,14 @@ export class SavedFiltersService {
       where.entityType = entityType;
     }
 
-    return this.prisma.savedFilter.findMany({
+    const filters = await this.prisma.savedFilter.findMany({
       where,
       orderBy: {
         updatedAt: 'desc',
       },
     });
+
+    return filters.map((filter) => this.normalizeFilter(filter));
   }
 
   async findOne(id: string, userId: string) {
@@ -58,7 +60,7 @@ export class SavedFiltersService {
       throw new ForbiddenException('Access denied to this filter');
     }
 
-    return filter;
+    return this.normalizeFilter(filter);
   }
 
   async update(id: string, data: UpdateSavedFilterDto, userId: string) {
@@ -74,7 +76,7 @@ export class SavedFiltersService {
       data: {
         name: data.name,
         description: data.description,
-        filters: data.filters,
+        filters: data.filters ? JSON.stringify(data.filters) : undefined,
         isPublic: data.isPublic,
       },
     });
@@ -91,5 +93,27 @@ export class SavedFiltersService {
     return this.prisma.savedFilter.delete({
       where: { id },
     });
+  }
+
+  private normalizeFilter<T extends { filters: string }>(
+    filter: T,
+  ): Omit<T, 'filters'> & { filters: Record<string, any> } {
+    return {
+      ...filter,
+      filters: this.parseFilters(filter.filters),
+    };
+  }
+
+  private parseFilters(filters: string): Record<string, any> {
+    try {
+      const parsed = JSON.parse(filters);
+      if (parsed && typeof parsed === 'object') {
+        return parsed;
+      }
+    } catch {
+      return {};
+    }
+
+    return {};
   }
 }

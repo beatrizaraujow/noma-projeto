@@ -39,7 +39,7 @@ export class AuditLogService {
         resource: data.resource,
         resourceId: data.resourceId,
         description: data.description,
-        metadata: data.metadata,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
       },
@@ -103,7 +103,10 @@ export class AuditLogService {
     ]);
 
     return {
-      logs,
+      logs: logs.map((log) => ({
+        ...log,
+        metadata: this.parseMetadata(log.metadata),
+      })),
       total,
       page,
       limit,
@@ -217,8 +220,23 @@ export class AuditLogService {
         userId: item.userId,
         count: item._count.userId,
       })),
-      recentLogs,
+      recentLogs: recentLogs.map((log) => ({
+        ...log,
+        metadata: this.parseMetadata(log.metadata),
+      })),
     };
+  }
+
+  private parseMetadata(metadata: string | null): Record<string, any> | null {
+    if (!metadata) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(metadata);
+    } catch {
+      return null;
+    }
   }
 
   /**

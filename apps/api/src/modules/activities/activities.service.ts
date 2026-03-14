@@ -30,7 +30,7 @@ export class ActivitiesService {
       throw new ForbiddenException('You do not have access to this project');
     }
 
-    return this.prisma.activity.findMany({
+    const activities = await this.prisma.activity.findMany({
       where: { projectId },
       include: {
         user: {
@@ -53,6 +53,8 @@ export class ActivitiesService {
       },
       take: 100,
     });
+
+    return activities.map((activity) => this.normalizeActivityMetadata(activity));
   }
 
   async findByTask(taskId: string, userId: string) {
@@ -84,7 +86,7 @@ export class ActivitiesService {
       throw new ForbiddenException('You do not have access to this task');
     }
 
-    return this.prisma.activity.findMany({
+    const activities = await this.prisma.activity.findMany({
       where: { taskId },
       include: {
         user: {
@@ -100,6 +102,8 @@ export class ActivitiesService {
         createdAt: 'desc',
       },
     });
+
+    return activities.map((activity) => this.normalizeActivityMetadata(activity));
   }
 
   async createActivity(data: {
@@ -110,14 +114,14 @@ export class ActivitiesService {
     userId: string;
     metadata?: any;
   }) {
-    return this.prisma.activity.create({
+    const activity = await this.prisma.activity.create({
       data: {
         type: data.type,
         description: data.description,
         projectId: data.projectId,
         taskId: data.taskId,
         userId: data.userId,
-        metadata: data.metadata,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
       },
       include: {
         user: {
@@ -130,5 +134,33 @@ export class ActivitiesService {
         },
       },
     });
+
+    return this.normalizeActivityMetadata(activity);
+  }
+
+  private normalizeActivityMetadata<T extends { metadata: string | null }>(
+    activity: T,
+  ): Omit<T, 'metadata'> & { metadata: Record<string, any> | null } {
+    return {
+      ...activity,
+      metadata: this.parseMetadata(activity.metadata),
+    };
+  }
+
+  private parseMetadata(metadata: string | null): Record<string, any> | null {
+    if (!metadata) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(metadata);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
   }
 }
