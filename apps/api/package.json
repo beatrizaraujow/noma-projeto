@@ -17,7 +17,7 @@
     "db:migrate": "prisma db push --schema ../../packages/database/prisma/schema.prisma",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio --schema ../../packages/database/prisma/schema.prisma",
-    "postinstall": "prisma generate --schema ../../packages/database/prisma/schema.prisma"
+    "postinstall": "PRISMA_SCHEMA_PATH=../../packages/database/prisma/schema.prisma prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
