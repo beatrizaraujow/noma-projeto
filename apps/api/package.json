@@ -17,7 +17,7 @@
     "db:migrate": "prisma db push --schema ../../packages/database/prisma/schema.prisma",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio --schema ../../packages/database/prisma/schema.prisma",
-    "postinstall": "PRISMA_SCHEMA_PATH=../../packages/database/prisma/schema.prisma prisma generate"
+    "postinstall": "cross-env PRISMA_SCHEMA_PATH=../../packages/database/prisma/schema.prisma prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
@@ -81,7 +81,8 @@
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "cross-env": "^7.0.3"
   },
   "jest": {
     "moduleFileExtensions": ["js", "json", "ts"],
