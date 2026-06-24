@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 
 export type SignupMethod = 'email' | 'google';
@@ -15,12 +16,19 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: { email: string; password: string; name: string }) {
-    return this.prisma.user.create({
-      data: {
-        ...data,
-        role: 'USER',
-      },
-    });
+    try {
+      return await this.prisma.user.create({
+        data: {
+          ...data,
+          role: 'USER',
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('Este email ja esta em uso');
+      }
+      throw err;
+    }
   }
 
   async findAll() {
