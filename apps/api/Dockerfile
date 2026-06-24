@@ -24,4 +24,4 @@ EXPOSE 3001
 
 WORKDIR /app/apps/api
 
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=../../packages/database/prisma/schema.prisma && node dist/main"]
+CMD ["sh", "-c", "npx prisma db push --schema=../../packages/database/prisma/schema.prisma --accept-data-loss && node dist/main"]
