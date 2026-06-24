@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-RUN corepack enable && corepack prepare pnpm@8.12.0 --activate
+RUN apk add --no-cache openssl && corepack enable && corepack prepare pnpm@8.12.0 --activate
 
 # ---- deps ----
 FROM base AS deps
@@ -11,6 +11,8 @@ COPY packages/config/package.json ./packages/config/
 COPY packages/database/package.json ./packages/database/
 COPY packages/types/package.json ./packages/types/
 COPY packages/ui/package.json ./packages/ui/
+# Prisma schema needed for postinstall (prisma generate)
+COPY packages/database/prisma ./packages/database/prisma
 
 RUN pnpm install --frozen-lockfile
 
