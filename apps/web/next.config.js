@@ -130,8 +130,6 @@ const nextConfig = {
     optimizePackageImports: ['@nexora/ui', 'lucide-react'],
   },
   
-  // Output standalone for production runtime
-  output: 'standalone',
 };
 
 module.exports = nextConfig;
