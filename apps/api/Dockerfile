@@ -20,8 +20,10 @@ COPY . .
 RUN pnpm --filter @nexora/api build
 
 ENV NODE_ENV=production
+# pnpm 8 does not hoist workspace dep binaries to root; add the real prisma bin location
+ENV PATH="/app/packages/database/node_modules/.bin:/app/node_modules/.bin:$PATH"
 EXPOSE 3001
 
 WORKDIR /app/apps/api
 
-CMD ["sh", "-c", "npx prisma db push --schema=../../packages/database/prisma/schema.prisma --accept-data-loss && node dist/main"]
+CMD ["sh", "-c", "echo '=== DB Push ===' && prisma db push --schema=/app/packages/database/prisma/schema.prisma --accept-data-loss && echo '=== Starting API ===' && node dist/main"]
