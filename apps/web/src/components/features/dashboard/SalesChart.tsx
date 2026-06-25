@@ -13,9 +13,9 @@ interface SalesChartProps {
   period?: string;
 }
 
-export const SalesChart: React.FC<SalesChartProps> = ({ 
+export const SalesChart: React.FC<SalesChartProps> = ({
   title = 'Sales Dynamic',
-  data = defaultData,
+  data = [],
   period = 'One Year'
 }) => {
   return (
@@ -48,16 +48,3 @@ export const SalesChart: React.FC<SalesChartProps> = ({
   );
 };
 
-const defaultData = [
-  { month: 'Jan', revenue: 45000, orders: 320 },
-  { month: 'Feb', revenue: 52000, orders: 380 },
-  { month: 'Mar', revenue: 48000, orders: 350 },
-  { month: 'Apr', revenue: 61000, orders: 420 },
-  { month: 'May', revenue: 55000, orders: 390 },
-  { month: 'Jun', revenue: 67000, orders: 450 },
-  { month: 'Jul', revenue: 72000, orders: 480 },
-  { month: 'Aug', revenue: 68000, orders: 460 },
-  { month: 'Sep', revenue: 58000, orders: 410 },
-  { month: 'Oct', revenue: 63000, orders: 430 },
-  { month: 'Nov', revenue: 70000, orders: 470 },
-];

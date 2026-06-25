@@ -19,8 +19,8 @@ interface OrdersTableProps {
   title?: string;
 }
 
-export const OrdersTable: React.FC<OrdersTableProps> = ({ 
-  orders = defaultOrders,
+export const OrdersTable: React.FC<OrdersTableProps> = ({
+  orders = [],
   title = 'Orders List'
 }) => {
   const getStatusVariant = (status: Order['deliveryStatus']) => {
@@ -87,36 +87,44 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr 
-                key={order.id}
-                className="border-b border-gray-800 hover:bg-[#25252b] transition-colors"
-              >
-                <td className="py-4 px-4 text-white text-sm font-medium">
-                  {order.id}
-                </td>
-                <td className="py-4 px-4 text-gray-300 text-sm">
-                  {order.customer}
-                </td>
-                <td className="py-4 px-4 text-gray-300 text-sm">
-                  {order.order}
-                </td>
-                <td className="py-4 px-4 text-white text-sm font-semibold">
-                  {order.cost}
-                </td>
-                <td className="py-4 px-4 text-gray-400 text-sm">
-                  {order.dueDate}
-                </td>
-                <td className="py-4 px-4">
-                  <Badge variant={getStatusVariant(order.deliveryStatus)}>
-                    {order.deliveryStatus}
-                  </Badge>
-                </td>
-                <td className="py-4 px-4 text-gray-300 text-sm">
-                  {order.payment}
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center text-gray-500 text-sm">
+                  Nenhum pedido ainda.
                 </td>
               </tr>
-            ))}
+            ) : (
+              orders.map((order) => (
+                <tr
+                  key={order.id}
+                  className="border-b border-gray-800 hover:bg-[#25252b] transition-colors"
+                >
+                  <td className="py-4 px-4 text-white text-sm font-medium">
+                    {order.id}
+                  </td>
+                  <td className="py-4 px-4 text-gray-300 text-sm">
+                    {order.customer}
+                  </td>
+                  <td className="py-4 px-4 text-gray-300 text-sm">
+                    {order.order}
+                  </td>
+                  <td className="py-4 px-4 text-white text-sm font-semibold">
+                    {order.cost}
+                  </td>
+                  <td className="py-4 px-4 text-gray-400 text-sm">
+                    {order.dueDate}
+                  </td>
+                  <td className="py-4 px-4">
+                    <Badge variant={getStatusVariant(order.deliveryStatus)}>
+                      {order.deliveryStatus}
+                    </Badge>
+                  </td>
+                  <td className="py-4 px-4 text-gray-300 text-sm">
+                    {order.payment}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -124,23 +132,3 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
   );
 };
 
-const defaultOrders: Order[] = [
-  {
-    id: 'AM20281',
-    customer: 'Olivera Kalman',
-    order: 'Numeral 6-Digit',
-    cost: '$4,65',
-    dueDate: '01 Sep, 2024',
-    deliveryStatus: 'Completed',
-    payment: 'Credit Card'
-  },
-  {
-    id: 'NXL20281',
-    customer: 'Kenna Kennan',
-    order: 'Male 6-Digit',
-    cost: '$4,99',
-    dueDate: '07 Sep, 2024',
-    deliveryStatus: 'Pending',
-    payment: 'Paypal'
-  },
-];

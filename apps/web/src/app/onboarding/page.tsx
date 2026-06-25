@@ -2,16 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/common';
 
 type OnboardingStep = 'welcome' | 'workspace' | 'team' | 'project';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [workspaceId, setWorkspaceId] = useState<string>('1');
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+
+  const sessionWorkspaceId: string | null = (session as any)?.workspace?.id ?? null;
 
   const [workspaceForm, setWorkspaceForm] = useState({ name: '', description: '' });
   const [teamEmails, setTeamEmails] = useState('');
@@ -43,10 +47,10 @@ export default function OnboardingPage() {
       });
 
       if (!response.ok) {
-        setWorkspaceId('1');
+        setWorkspaceId(sessionWorkspaceId);
       } else {
         const result = await response.json();
-        setWorkspaceId(result.id || '1');
+        setWorkspaceId(result.id ?? sessionWorkspaceId);
       }
 
       setCurrentStep('team');
@@ -96,7 +100,8 @@ export default function OnboardingPage() {
         });
       }
 
-      router.push(`/workspaces/${workspaceId}/dashboard`);
+      const targetId = workspaceId ?? sessionWorkspaceId;
+      router.push(`/workspaces/${targetId}/dashboard`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ocorreu um erro');
     } finally {
@@ -173,7 +178,7 @@ export default function OnboardingPage() {
               value={teamEmails}
               onChange={(e) => setTeamEmails(e.target.value)}
               className="w-full px-4 py-3 bg-[#25252b] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 h-24 resize-none"
-              placeholder="ana@email.com, maria@email.com"
+              placeholder="colega@empresa.com"
               disabled={loading}
             />
             <div className="flex gap-2">
@@ -206,7 +211,7 @@ export default function OnboardingPage() {
             />
             <div className="flex gap-2">
               <Button variant="secondary" onClick={handleBack} disabled={loading}>Voltar</Button>
-              <Button variant="outline" onClick={() => router.push(`/workspaces/${workspaceId}/dashboard`)} disabled={loading}>
+              <Button variant="outline" onClick={() => router.push(`/workspaces/${workspaceId ?? sessionWorkspaceId}/dashboard`)} disabled={loading}>
                 Pular
               </Button>
               <Button onClick={handleCreateProject} disabled={loading}>
