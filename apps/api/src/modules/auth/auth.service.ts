@@ -203,6 +203,15 @@ export class AuthService {
     };
   }
 
+  async refresh(payload: { sub: string; email: string; workspaceId?: string }) {
+    const newPayload = {
+      email: payload.email,
+      sub: payload.sub,
+      workspaceId: payload.workspaceId,
+    };
+    return { access_token: this.jwtService.sign(newPayload) };
+  }
+
   async validateToken(token: string) {
     try {
       return this.jwtService.verify(token);

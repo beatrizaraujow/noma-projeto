@@ -85,6 +85,7 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account }) {
+      // Google OAuth sign-in
       if (HAS_GOOGLE_OAUTH && account?.provider === 'google') {
         try {
           const origin = consumeGoogleSignupOrigin();
@@ -100,16 +101,15 @@ export const authOptions: AuthOptions = {
           token.avatar = response.data.user.avatar;
           token.accessToken = response.data.access_token;
           token.workspace = response.data.workspace;
+          (token as any).expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
           (token as any).error = undefined;
           return token;
         } catch {
-          return {
-            ...token,
-            error: 'GoogleTokenExchangeError',
-          } as any;
+          return { ...token, error: 'GoogleTokenExchangeError' } as any;
         }
       }
 
+      // Credentials sign-in
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -117,9 +117,32 @@ export const authOptions: AuthOptions = {
         token.avatar = (user as any).avatar;
         token.accessToken = (user as any).accessToken;
         token.workspace = (user as any).workspace;
+        (token as any).expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+        return token;
       }
 
-      return token;
+      // Subsequent requests: skip refresh if token still has > 1 day
+      const expiresAt = (token as any).expiresAt as number | undefined;
+      if (!expiresAt || Date.now() < expiresAt - 24 * 60 * 60 * 1000) {
+        return token;
+      }
+
+      // Refresh the access token
+      try {
+        const response = await axios.post(
+          `${API_URL}/api/auth/refresh`,
+          {},
+          { headers: { Authorization: `Bearer ${token.accessToken}` } },
+        );
+        return {
+          ...token,
+          accessToken: response.data.access_token,
+          expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+          error: undefined,
+        } as any;
+      } catch {
+        return { ...token, error: 'RefreshTokenError' } as any;
+      }
     },
     async session({ session, token }) {
       if (token) {

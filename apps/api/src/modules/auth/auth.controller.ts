@@ -1,7 +1,8 @@
-import { Controller, Post, Body, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import type { SignupOrigin } from '../users/users.service';
 
 @ApiTags('auth')
@@ -55,10 +56,25 @@ export class AuthController {
       throw new UnauthorizedException('Google token is required');
     }
 
-    return this.authService.loginWithGoogleToken({
-      idToken,
-      accessToken,
-      origin,
+    return this.authService.loginWithGoogleToken({ idToken, accessToken, origin });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('refresh')
+  @ApiOperation({ summary: 'Renew JWT token' })
+  async refresh(@Request() req) {
+    return this.authService.refresh({
+      sub: req.user.userId,
+      email: req.user.email,
+      workspaceId: req.user.workspaceId,
     });
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  @ApiOperation({ summary: 'Logout (client must discard the token)' })
+  logout() {
+    return { message: 'Logged out successfully' };
   }
 }

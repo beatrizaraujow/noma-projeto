@@ -5,8 +5,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
 
-// NexORA API Bootstrap
 async function bootstrap() {
+  if (!process.env.JWT_SECRET) {
+    console.error('FATAL: JWT_SECRET environment variable is not set. Aborting.');
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
 
   // Security

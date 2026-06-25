@@ -17,6 +17,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   OAuthCreateAccount: 'Nao foi possivel criar conta com Google agora.',
   AccessDenied: 'Acesso negado pelo provedor Google.',
   Configuration: 'Configuracao de autenticacao invalida. Verifique variaveis de ambiente.',
+  google_failed: 'Falha ao autenticar com Google. Tente novamente.',
+  session_expired: 'Sua sessao expirou. Faca login novamente.',
 };
 
 const getAuthErrorMessage = (errorCode: string | null) => {

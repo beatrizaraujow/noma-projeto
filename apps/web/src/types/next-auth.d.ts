@@ -14,6 +14,7 @@ declare module 'next-auth' {
       slug: string;
     };
     accessToken?: string;
+    error?: 'GoogleTokenExchangeError' | 'RefreshTokenError';
   }
 
   interface User {
@@ -34,5 +35,7 @@ declare module 'next-auth/jwt' {
     avatar?: string;
     accessToken?: string;
     workspace?: any;
+    expiresAt?: number;
+    error?: 'GoogleTokenExchangeError' | 'RefreshTokenError';
   }
 }
