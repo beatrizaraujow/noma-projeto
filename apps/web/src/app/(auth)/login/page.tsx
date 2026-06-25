@@ -11,12 +11,13 @@ import {
 } from '@/lib/signup-origin';
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  CredentialsSignin: 'Email ou senha incorretos. Verifique seus dados e tente novamente.',
   google: 'Login com Google nao configurado neste ambiente.',
   OAuthSignin: 'Falha ao iniciar login com Google. Tente novamente.',
   OAuthCallback: 'Falha ao concluir login com Google. Tente novamente.',
   OAuthCreateAccount: 'Nao foi possivel criar conta com Google agora.',
-  AccessDenied: 'Acesso negado pelo provedor Google.',
-  Configuration: 'Configuracao de autenticacao invalida. Verifique variaveis de ambiente.',
+  AccessDenied: 'Acesso negado.',
+  Configuration: 'Erro de configuracao. Tente novamente.',
   google_failed: 'Falha ao autenticar com Google. Tente novamente.',
   session_expired: 'Sua sessao expirou. Faca login novamente.',
 };
@@ -76,7 +77,11 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+    // Clear stale URL error param so it doesn't reappear after this attempt
+    if (authErrorFromUrl) {
+      router.replace('/login', { scroll: false });
+    }
+
     try {
       const result = await signIn('credentials', {
         email: formData.email,
@@ -86,7 +91,11 @@ export default function LoginPage() {
       });
 
       if (!result?.ok) {
-        throw new Error('Credenciais invalidas');
+        const msg =
+          result?.error === 'CredentialsSignin'
+            ? 'Email ou senha incorretos. Verifique seus dados e tente novamente.'
+            : 'Nao foi possivel autenticar. Tente novamente.';
+        throw new Error(msg);
       }
 
       router.push(result.url || callbackUrl);

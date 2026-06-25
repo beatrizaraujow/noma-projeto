@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { WorkspacesService } from '../workspaces/workspaces.service';
+import { MailerService } from './mailer.service';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import type { SignupOrigin } from '../users/users.service';
@@ -11,7 +12,8 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private workspacesService: WorkspacesService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private mailerService: MailerService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -75,7 +77,10 @@ export class AuthService {
       workspaceId: workspace.id,
       origin: signupOrigin,
     });
-    
+
+    // Send welcome email (non-blocking — registration succeeds even if email fails)
+    this.mailerService.sendWelcomeEmail(user.email, user.name).catch(() => {});
+
     const { password: _, ...result } = user;
     return this.login(result);
   }
