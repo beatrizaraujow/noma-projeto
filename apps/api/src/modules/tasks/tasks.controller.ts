@@ -14,6 +14,7 @@ import { TasksService } from './tasks.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TaskFilterDto } from './dto/task-filter.dto';
+import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
 
 @ApiTags('tasks')
 @ApiBearerAuth()
@@ -89,6 +90,34 @@ export class TasksController {
   @ApiOperation({ summary: 'Delete task' })
   remove(@Param('id') id: string, @Request() req) {
     return this.tasksService.remove(id, req.user.userId);
+  }
+
+  @Post(':id/time-entries')
+  @ApiOperation({ summary: 'Log time on a task' })
+  createTimeEntry(
+    @Param('id') id: string,
+    @Body() dto: CreateTimeEntryDto,
+    @Request() req,
+  ) {
+    return this.tasksService.createTimeEntry(id, dto, req.user.userId);
+  }
+
+  @Get(':id/time-entries')
+  @ApiOperation({ summary: 'List time entries for a task' })
+  getTimeEntries(@Param('id') id: string, @Request() req) {
+    return this.tasksService.getTimeEntries(id, req.user.userId);
+  }
+
+  @Get('time-report')
+  @ApiOperation({ summary: 'Time report by project/user/period' })
+  getTimeReport(
+    @Query('projectId') projectId: string,
+    @Query('userId') userId: string,
+    @Query('start') start: string,
+    @Query('end') end: string,
+    @Request() req,
+  ) {
+    return this.tasksService.getTimeReport({ projectId, userId, start, end }, req.user.userId);
   }
 
   @Put('positions/bulk')

@@ -377,6 +377,75 @@ export class TasksService {
     return Promise.all(updatePromises);
   }
 
+  async createTimeEntry(
+    taskId: string,
+    dto: { hours: number; description?: string; date?: string },
+    userId: string,
+  ) {
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+    await this.verifyProjectAccess(task.projectId, userId);
+
+    const entry = await this.prisma.timeEntry.create({
+      data: {
+        taskId,
+        userId,
+        hours: dto.hours,
+        description: dto.description,
+        date: dto.date ? new Date(dto.date) : new Date(),
+      },
+      include: { user: { select: { id: true, name: true, avatar: true } } },
+    });
+
+    await this.prisma.task.update({
+      where: { id: taskId },
+      data: { actualHours: { increment: dto.hours } },
+    });
+
+    return entry;
+  }
+
+  async getTimeEntries(taskId: string, userId: string) {
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+    await this.verifyProjectAccess(task.projectId, userId);
+
+    return this.prisma.timeEntry.findMany({
+      where: { taskId },
+      include: { user: { select: { id: true, name: true, avatar: true } } },
+      orderBy: { date: 'desc' },
+    });
+  }
+
+  async getTimeReport(
+    filters: { projectId?: string; userId?: string; start?: string; end?: string },
+    requestingUserId: string,
+  ) {
+    const where: any = {};
+    if (filters.projectId) {
+      await this.verifyProjectAccess(filters.projectId, requestingUserId);
+      where.task = { projectId: filters.projectId };
+    }
+    if (filters.userId) where.userId = filters.userId;
+    if (filters.start || filters.end) {
+      where.date = {};
+      if (filters.start) where.date.gte = new Date(filters.start);
+      if (filters.end) where.date.lte = new Date(filters.end);
+    }
+
+    const entries = await this.prisma.timeEntry.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true, avatar: true } },
+        task: { select: { id: true, title: true, projectId: true } },
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    const totalHours = entries.reduce((sum, e) => sum + e.hours, 0);
+    return { entries, totalHours };
+  }
+
   private async verifyProjectAccess(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },

@@ -21,18 +21,20 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ownedProjects        Project[]         @relation("ProjectOwner")
-  projects             Project[]         @relation("ProjectMembers")
+  ownedProjects        Project[]           @relation("ProjectOwner")
+  projects             Project[]           @relation("ProjectMembers")
   tasks                Task[]
   comments             Comment[]
   activities           Activity[]
   workspaceMemberships WorkspaceMember[]
-  sentInvites          WorkspaceInvite[] @relation("InviteSender")
+  sentInvites          WorkspaceInvite[]   @relation("InviteSender")
   savedFilters         SavedFilter[]
   projectMemberships   ProjectMember[]
   customRoles          CustomRole[]
   auditLogs            AuditLog[]
   guestAccesses        GuestAccess[]
+  timeEntries          TimeEntry[]
+  routineCompletions   RoutineCompletion[]
 
   @@map("users")
 }
@@ -49,6 +51,7 @@ model Workspace {
   members  WorkspaceMember[]
   projects Project[]
   invites  WorkspaceInvite[]
+  routines Routine[]
 
   @@map("workspaces")
 }
@@ -117,26 +120,80 @@ model Project {
 }
 
 model Task {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  status      String    @default("TODO")
-  priority    String    @default("MEDIUM")
-  dueDate     DateTime?
-  projectId   String
-  assigneeId  String?
-  position    Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  status         String    @default("EM_PROGRESSO")
+  priority       String    @default("MEDIUM")
+  dueDate        DateTime?
+  projectId      String
+  assigneeId     String?
+  position       Int       @default(0)
+  estimatedHours Float?
+  actualHours    Float?    @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee   User?      @relation(fields: [assigneeId], references: [id])
-  comments   Comment[]
-  activities Activity[]
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee    User?       @relation(fields: [assigneeId], references: [id])
+  comments    Comment[]
+  activities  Activity[]
+  timeEntries TimeEntry[]
 
   @@index([projectId])
   @@index([assigneeId])
   @@map("tasks")
+}
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  taskId      String
+  userId      String
+  hours       Float
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("time_entries")
+}
+
+model Routine {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  title        String
+  description  String?
+  frequency    String   @default("DAILY")
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  allowedRoles String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  completions RoutineCompletion[]
+
+  @@index([workspaceId])
+  @@map("routines")
+}
+
+model RoutineCompletion {
+  id          String   @id @default(cuid())
+  routineId   String
+  userId      String
+  completedAt DateTime @default(now())
+  periodKey   String
+
+  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([routineId, userId, periodKey])
+  @@index([routineId])
+  @@map("routine_completions")
 }
 
 model Comment {

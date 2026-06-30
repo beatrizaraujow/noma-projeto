@@ -9,7 +9,9 @@ import {
   HelpCircle,
   LogOut,
   Search,
-  ChevronRight
+  ChevronRight,
+  CheckSquare,
+  RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -39,6 +41,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) =>
     ? [
         { id: 'dashboard', label: 'Painel', icon: <LayoutDashboard size={20} />, href: `/workspaces/${workspaceId}` },
         { id: 'workspace-dashboard', label: 'Dashboard', icon: <BarChart3 size={20} />, href: `/workspaces/${workspaceId}/dashboard` },
+        { id: 'tasks', label: 'Tarefas', icon: <CheckSquare size={20} />, href: `/workspaces/${workspaceId}/tasks` },
+        { id: 'routines', label: 'Rotinas', icon: <RefreshCw size={20} />, href: `/workspaces/${workspaceId}/routines` },
         { id: 'analytics', label: 'Análises', icon: <BarChart3 size={20} />, href: `/workspaces/${workspaceId}/analytics` },
         { id: 'customers', label: 'Clientes', icon: <Users size={20} />, href: `/workspaces/${workspaceId}/invoices` },
       ]
