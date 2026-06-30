@@ -47,8 +47,10 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@jest/globals": "^30.4.1",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
+    "@types/jest": "^29.5.11",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.45",
     "@types/react-big-calendar": "^1.16.3",

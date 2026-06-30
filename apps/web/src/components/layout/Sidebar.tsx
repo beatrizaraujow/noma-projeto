@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Briefcase, 
-  Users, 
-  Settings, 
-  HelpCircle, 
+import {
+  LayoutDashboard,
+  BarChart3,
+  Users,
+  Settings,
+  HelpCircle,
   LogOut,
   Search,
   ChevronRight
@@ -41,13 +40,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) =>
         { id: 'dashboard', label: 'Painel', icon: <LayoutDashboard size={20} />, href: `/workspaces/${workspaceId}` },
         { id: 'workspace-dashboard', label: 'Dashboard', icon: <BarChart3 size={20} />, href: `/workspaces/${workspaceId}/dashboard` },
         { id: 'analytics', label: 'Análises', icon: <BarChart3 size={20} />, href: `/workspaces/${workspaceId}/analytics` },
-        { id: 'deals', label: 'Meus negócios', icon: <Briefcase size={20} />, href: `/workspaces/${workspaceId}/projects` },
         { id: 'customers', label: 'Clientes', icon: <Users size={20} />, href: `/workspaces/${workspaceId}/invoices` },
       ]
     : [
         { id: 'dashboard', label: 'Painel', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
         { id: 'analytics', label: 'Análises', icon: <BarChart3 size={20} />, href: '/analytics' },
-        { id: 'deals', label: 'Meus negócios', icon: <Briefcase size={20} />, href: '/deals' },
         { id: 'customers', label: 'Clientes', icon: <Users size={20} />, href: '/customers' },
       ];
 
