@@ -68,22 +68,16 @@ export default function AnalyticsPage() {
     { id: 'reports', label: 'Relatórios', active: activeTab === 'reports' },
   ];
 
-  // Analytics data
   const metrics = {
-    totalHours: 342,
-    completionRate: 78,
-    averageTaskTime: 4.2,
-    productivityScore: 8.5,
-    tasksCompleted: 156,
-    tasksCreated: 200,
+    totalHours: 0,
+    completionRate: 0,
+    averageTaskTime: 0,
+    productivityScore: 0,
+    tasksCompleted: 0,
+    tasksCreated: 0,
   };
 
-  const fallbackProjectPerformance = [
-    { name: 'Website', completion: 85, tasks: 34, hours: 128 },
-    { name: 'App Mobile', completion: 62, tasks: 28, hours: 98 },
-    { name: 'Design System', completion: 91, tasks: 19, hours: 76 },
-    { name: 'Marketing', completion: 45, tasks: 22, hours: 40 },
-  ];
+  const fallbackProjectPerformance: { name: string; completion: number; tasks: number; hours: number }[] = [];
 
   const heatmapHours = ['09h', '10h', '11h', '12h', '13h', '14h', '15h'];
   const heatmapDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
@@ -127,15 +121,7 @@ export default function AnalyticsPage() {
     const base = Array.from({ length: heatmapHours.length }, () => Array.from({ length: heatmapDays.length }, () => 0));
 
     if (!dashboardData?.recentActivity?.length) {
-      return [
-        [0, 0, 1, 0, 0, 0, 0],
-        [0, 1, 1, 2, 1, 0, 0],
-        [1, 1, 2, 3, 2, 1, 0],
-        [1, 2, 3, 4, 3, 2, 1],
-        [1, 2, 2, 3, 2, 1, 0],
-        [0, 1, 1, 2, 1, 1, 0],
-        [0, 0, 1, 0, 0, 0, 0],
-      ];
+      return base;
     }
 
     dashboardData.recentActivity.forEach((activity) => {
@@ -159,14 +145,7 @@ export default function AnalyticsPage() {
 
   const monthlyPerformanceData = useMemo(() => {
     if (!dashboardData?.recentActivity?.length) {
-      return [
-        { month: 'Jan', sales: 2500, target: 3000 },
-        { month: 'Fev', sales: 4700, target: 3400 },
-        { month: 'Mar', sales: 3300, target: 4500 },
-        { month: 'Abr', sales: 5000, target: 3830 },
-        { month: 'Mai', sales: 3900, target: 4400 },
-        { month: 'Jun', sales: 5600, target: 5000 },
-      ];
+      return [];
     }
 
     const now = new Date();
@@ -209,9 +188,11 @@ export default function AnalyticsPage() {
     return 'bg-[#25252b]';
   };
 
-  const topPerformer = projectPerformance.reduce((best, current) =>
-    current.completion > best.completion ? current : best
-  );
+  const topPerformer = projectPerformance.length > 0
+    ? projectPerformance.reduce((best, current) =>
+        current.completion > best.completion ? current : best
+      )
+    : null;
 
   return (
     <div className="flex h-screen bg-[#16161a] overflow-hidden">
@@ -420,23 +401,29 @@ export default function AnalyticsPage() {
 
                 <div className="bg-[#1a1a1f] border border-gray-800 rounded-xl p-6">
                   <h3 className="text-white font-semibold text-lg mb-4">Destaque</h3>
-                  <div className="rounded-xl p-5 bg-gradient-to-br from-orange-500 to-red-600">
-                    <p className="text-white/90 text-sm mb-1">Melhor performance</p>
-                    <h4 className="text-white text-xl font-bold mb-2">{topPerformer.name}</h4>
-                    <p className="text-white text-sm">{topPerformer.completion}% de conclusão</p>
-                  </div>
-                  <div className="mt-4 space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Média de conclusão</span>
-                      <span className="text-white font-medium">
-                        {Math.round(projectPerformance.reduce((sum, item) => sum + item.completion, 0) / projectPerformance.length)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Projetos acompanhados</span>
-                      <span className="text-white font-medium">{projectPerformance.length}</span>
-                    </div>
-                  </div>
+                  {topPerformer ? (
+                    <>
+                      <div className="rounded-xl p-5 bg-gradient-to-br from-orange-500 to-red-600">
+                        <p className="text-white/90 text-sm mb-1">Melhor performance</p>
+                        <h4 className="text-white text-xl font-bold mb-2">{topPerformer.name}</h4>
+                        <p className="text-white text-sm">{topPerformer.completion}% de conclusão</p>
+                      </div>
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Média de conclusão</span>
+                          <span className="text-white font-medium">
+                            {Math.round(projectPerformance.reduce((sum, item) => sum + item.completion, 0) / projectPerformance.length)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Projetos acompanhados</span>
+                          <span className="text-white font-medium">{projectPerformance.length}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-gray-500 text-sm">Nenhum projeto ainda.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -454,15 +441,15 @@ export default function AnalyticsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Concluídas</span>
-                    <Badge variant="success">156</Badge>
+                    <Badge variant="success">0</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Em Progresso</span>
-                    <Badge variant="warning">28</Badge>
+                    <Badge variant="warning">0</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">A Fazer</span>
-                    <Badge variant="outline">16</Badge>
+                    <Badge variant="outline">0</Badge>
                   </div>
                 </div>
               </div>
@@ -477,15 +464,15 @@ export default function AnalyticsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Urgente</span>
-                    <Badge variant="error">8</Badge>
+                    <Badge variant="error">0</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Alta</span>
-                    <Badge variant="warning">24</Badge>
+                    <Badge variant="warning">0</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400 text-sm">Média</span>
-                    <Badge variant="info">42</Badge>
+                    <Badge variant="info">0</Badge>
                   </div>
                 </div>
               </div>

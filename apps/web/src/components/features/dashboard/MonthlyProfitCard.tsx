@@ -11,9 +11,9 @@ interface MonthlyProfitCardProps {
 }
 
 export const MonthlyProfitCard: React.FC<MonthlyProfitCardProps> = ({
-  value = '$43,521.58',
-  trend = 12.5,
-  data = [4200, 3800, 4500, 5200, 4800, 5500, 6100, 5800, 4900, 5300, 6000, 5700]
+  value = '—',
+  trend,
+  data = []
 }) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   

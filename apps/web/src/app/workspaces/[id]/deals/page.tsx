@@ -43,68 +43,7 @@ export default function DealsPage() {
     { id: 'fechado', label: 'Fechados' },
   ];
 
-  const [deals, setDeals] = useState<Deal[]>([
-    {
-      id: '1',
-      title: 'Implementação Sistema CRM',
-      client: 'Tech Solutions Ltda',
-      value: 150000,
-      status: 'negociacao',
-      priority: 'alta',
-      probability: 75,
-      expectedCloseDate: '2026-03-15',
-      createdAt: '2026-01-10',
-      assignedTo: 'João Silva'
-    },
-    {
-      id: '2',
-      title: 'Consultoria Digital Marketing',
-      client: 'Marketing Pro',
-      value: 45000,
-      status: 'proposta',
-      priority: 'media',
-      probability: 60,
-      expectedCloseDate: '2026-02-28',
-      createdAt: '2026-01-15',
-      assignedTo: 'Maria Santos'
-    },
-    {
-      id: '3',
-      title: 'Desenvolvimento E-commerce',
-      client: 'Loja Virtual SA',
-      value: 280000,
-      status: 'negociacao',
-      priority: 'alta',
-      probability: 85,
-      expectedCloseDate: '2026-03-30',
-      createdAt: '2026-01-20',
-      assignedTo: 'Pedro Costa'
-    },
-    {
-      id: '4',
-      title: 'Sistema de Gestão Interna',
-      client: 'Indústrias ABC',
-      value: 95000,
-      status: 'fechado',
-      priority: 'media',
-      probability: 100,
-      expectedCloseDate: '2026-02-10',
-      createdAt: '2025-12-01',
-      assignedTo: 'Ana Lima'
-    },
-    {
-      id: '5',
-      title: 'Aplicativo Mobile',
-      client: 'StartUp XYZ',
-      value: 120000,
-      status: 'perdido',
-      priority: 'baixa',
-      probability: 0,
-      expectedCloseDate: '2026-01-30',
-      createdAt: '2025-11-15',
-      assignedTo: 'Carlos Souza'
-    }
-  ]);
+  const [deals, setDeals] = useState<Deal[]>([]);
 
   const getStatusBadge = (status: Deal['status']) => {
     const variants: Record<Deal['status'], { variant: any; label: string }> = {

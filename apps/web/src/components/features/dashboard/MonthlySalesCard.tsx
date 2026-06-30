@@ -11,16 +11,11 @@ interface MonthlySalesCardProps {
 }
 
 export const MonthlySalesCard: React.FC<MonthlySalesCardProps> = ({
-  value = '$21,845',
-  trend = 8.2,
+  value = '—',
+  trend,
   period = 'September'
 }) => {
-  const data = [
-    { label: 'Jul', value1: 18000, value2: 19500, value3: 17800 },
-    { label: 'Aug', value1: 19200, value2: 20100, value3: 18900 },
-    { label: 'Sep', value1: 21845, value2: 22300, value3: 21200 },
-    { label: 'Oct', value1: 20500, value2: 21800, value3: 20200 },
-  ];
+  const data: { label: string; value1: number; value2: number; value3: number }[] = [];
 
   return (
     <div className="bg-[#1a1a1f] border border-gray-800 rounded-xl p-6">
@@ -54,7 +49,7 @@ export const MonthlySalesCard: React.FC<MonthlySalesCardProps> = ({
 
       {/* Values footer */}
       <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-800">
-        {['$4,503', '$5.03', '$43,521', '$10.18'].map((val, index) => (
+        {['—', '—', '—', '—'].map((val, index) => (
           <div key={index} className="text-center">
             <div className={`text-sm font-semibold mb-1 ${
               index === 2 ? 'text-white' : 'text-gray-400'

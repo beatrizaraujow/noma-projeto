@@ -51,47 +51,6 @@ interface TeamProductivityMetricsProps {
   token: string;
 }
 
-const MOCK_TEAM_PRODUCTIVITY: TeamProductivityData = {
-  memberMetrics: [
-    {
-      user: {
-        id: 'u1',
-        name: 'João Silva',
-        email: 'joao@demo.com',
-      },
-      assignedTasks: 14,
-      completedTasks: 10,
-      completionRate: 71,
-      activitiesCount: 22,
-      commentsCount: 18,
-      recentActivities: [
-        { type: 'TASK_COMPLETED', count: 6 },
-        { type: 'COMMENT_ADDED', count: 8 },
-      ],
-    },
-    {
-      user: {
-        id: 'u2',
-        name: 'Maria Santos',
-        email: 'maria@demo.com',
-      },
-      assignedTasks: 12,
-      completedTasks: 9,
-      completionRate: 75,
-      activitiesCount: 19,
-      commentsCount: 11,
-      recentActivities: [
-        { type: 'TASK_COMPLETED', count: 5 },
-        { type: 'TASK_ASSIGNED', count: 4 },
-      ],
-    },
-  ],
-  teamAverages: {
-    totalAssigned: 26,
-    totalCompleted: 19,
-    averageCompletionRate: 73,
-  },
-};
 
 export default function TeamProductivityMetrics({
   workspaceId,
@@ -116,7 +75,7 @@ export default function TeamProductivityMetrics({
       setError(null);
     } catch (err: any) {
       console.error('Error loading team productivity:', err);
-      setData(MOCK_TEAM_PRODUCTIVITY);
+      setData(null);
       setError(null);
     } finally {
       setLoading(false);

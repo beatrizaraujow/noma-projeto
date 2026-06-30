@@ -42,40 +42,6 @@ interface ProjectProgressTrackerProps {
   token: string;
 }
 
-const MOCK_PROJECT_PROGRESS: ProjectProgress[] = [
-  {
-    projectId: 'p1',
-    projectName: 'Website Redesign',
-    totalTasks: 24,
-    completedTasks: 16,
-    inProgressTasks: 5,
-    todoTasks: 2,
-    overdueTasks: 1,
-    completionRate: 67,
-    tasksByPriority: [
-      { priority: 'LOW', count: 5 },
-      { priority: 'MEDIUM', count: 8 },
-      { priority: 'HIGH', count: 9 },
-      { priority: 'URGENT', count: 2 },
-    ],
-  },
-  {
-    projectId: 'p2',
-    projectName: 'Mobile App',
-    totalTasks: 18,
-    completedTasks: 9,
-    inProgressTasks: 4,
-    todoTasks: 4,
-    overdueTasks: 1,
-    completionRate: 50,
-    tasksByPriority: [
-      { priority: 'LOW', count: 3 },
-      { priority: 'MEDIUM', count: 6 },
-      { priority: 'HIGH', count: 7 },
-      { priority: 'URGENT', count: 2 },
-    ],
-  },
-];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 const PRIORITY_COLORS: Record<string, string> = {
@@ -108,7 +74,7 @@ export default function ProjectProgressTracker({
       setError(null);
     } catch (err: any) {
       console.error('Error loading project progress:', err);
-      setProjects(MOCK_PROJECT_PROGRESS);
+      setProjects([]);
       setError(null);
     } finally {
       setLoading(false);

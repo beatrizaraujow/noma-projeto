@@ -36,19 +36,9 @@ interface Activity {
   user: string;
 }
 
-// Mock data
-const MOCK_TASKS: Task[] = [
-  { id: '1', title: 'Design da nova landing page', status: 'in-progress', priority: 'high', assignee: 'João', dueDate: '15/02/2026', project: 'Website' },
-  { id: '2', title: 'Corrigir bug no login', status: 'todo', priority: 'urgent', assignee: 'Sarah', dueDate: '12/02/2026', project: 'Backend' },
-  { id: '3', title: 'Atualizar documentação', status: 'completed', priority: 'low', assignee: 'Mike', dueDate: '10/02/2026', project: 'Docs' },
-  { id: '4', title: 'Reunião de revisão com cliente', status: 'todo', priority: 'medium', assignee: 'Ana', dueDate: '14/02/2026', project: 'Gestão' },
-];
+const MOCK_TASKS: Task[] = [];
 
-const MOCK_ACTIVITIES: Activity[] = [
-  { id: '1', type: 'task', title: 'Tarefa Concluída', description: 'Design da landing page aprovado', time: '2h atrás', status: 'Concluído', user: 'João Silva' },
-  { id: '2', type: 'project', title: 'Novo Projeto', description: 'App Mobile iniciado', time: '5h atrás', status: 'Em Progresso', user: 'Maria Santos' },
-  { id: '3', type: 'member', title: 'Novo Membro', description: 'Pedro entrou na equipe', time: '1d atrás', status: 'Ativo', user: 'Admin' },
-];
+const MOCK_ACTIVITIES: Activity[] = [];
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
@@ -63,15 +53,14 @@ export default function WorkspaceDetailPage() {
     { id: 'team', label: 'Equipe', active: activeTab === 'team' },
   ];
 
-  // Stats data
   const stats = {
-    totalTasks: 42,
-    completedTasks: 28,
-    inProgressTasks: 8,
-    overdueTasks: 6,
-    completionRate: 67,
-    activeProjects: 5,
-    teamMembers: 12,
+    totalTasks: 0,
+    completedTasks: 0,
+    inProgressTasks: 0,
+    overdueTasks: 0,
+    completionRate: 0,
+    activeProjects: 0,
+    teamMembers: 0,
   };
 
   // Transform tasks for OrdersTable
@@ -177,7 +166,7 @@ export default function WorkspaceDetailPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400 text-sm">Tarefas/Membro</span>
-                      <span className="text-white font-semibold">{Math.round(stats.totalTasks / stats.teamMembers)}</span>
+                      <span className="text-white font-semibold">{stats.teamMembers > 0 ? Math.round(stats.totalTasks / stats.teamMembers) : 0}</span>
                     </div>
                   </div>
 
@@ -415,7 +404,7 @@ export default function WorkspaceDetailPage() {
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-[#25252b] border border-gray-700">
                     <span className="text-gray-400 text-sm">Projetos por membro</span>
-                    <span className="text-orange-400 font-semibold">{Math.max(1, Math.round(stats.activeProjects / teamMembers.length))}</span>
+                    <span className="text-orange-400 font-semibold">{teamMembers.length > 0 ? Math.max(1, Math.round(stats.activeProjects / teamMembers.length)) : 0}</span>
                   </div>
                 </div>
 
