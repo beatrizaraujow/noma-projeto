@@ -13,9 +13,11 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  // Atrás de proxy (Railway): confia no 1º hop para que o rate limiting
-  // enxergue o IP real do cliente (via X-Forwarded-For), e não o do proxy.
-  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  // Atrás de proxy (Railway): confia na cadeia de proxies para que req.ip
+  // reflita o X-Forwarded-For. O IP usado pelo rate limiting é resolvido de
+  // forma robusta no getTracker do ThrottlerModule (IP público mais à direita),
+  // porque 'trust proxy = 1' resolvia para um IP de borda do Railway que rotaciona.
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
 
   // Security
   app.use(helmet());

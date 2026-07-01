@@ -39,12 +39,30 @@ import { RoutinesModule } from './modules/routines/routines.module';
     //   playground: true,
     //   context: ({ req, res }) => ({ req, res }),
     // }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 10,
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60000, limit: 10 }],
+      // Atrás do proxy do Railway, req.ip cai num IP de borda que ROTACIONA,
+      // fazendo o rate limiting nunca atingir o limite por cliente. Aqui keamos
+      // pelo IP publico mais a DIREITA do X-Forwarded-For: e o IP que a borda do
+      // Railway anexa (cliente real). Hops internos (privados) ficam a direita e
+      // sao ignorados; um XFF forjado pelo cliente fica a ESQUERDA e tambem e
+      // ignorado -> resistente a spoofing.
+      getTracker: (req) => {
+        const raw = req?.headers?.['x-forwarded-for'];
+        const chain = (Array.isArray(raw) ? raw.join(',') : raw || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const isPrivate = (ip) =>
+          /^::1$|^fe80:|^f[cd][0-9a-f]{2}:|^127\.|^10\.|^192\.168\.|^169\.254\.|^172\.(1[6-9]|2\d|3[01])\./i.test(
+            ip,
+          );
+        for (let i = chain.length - 1; i >= 0; i--) {
+          if (!isPrivate(chain[i])) return chain[i];
+        }
+        return req?.ip;
       },
-    ]),
+    }),
     DatabaseModule.forRoot(),
     AuthModule,
     UsersModule,
