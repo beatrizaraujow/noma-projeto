@@ -131,10 +131,12 @@ import { NotificationBell } from '@/components/NotificationBell';
 
 ## 🔐 Segurança
 
-- Autenticação via JWT no handshake do Socket.io
-- Validação de acesso ao projeto antes de juntar sala
-- Rooms isoladas por projeto
-- Notificações enviadas apenas para usuários específicos
+> ⚠️ **O gateway NÃO valida JWT no handshake.** A identidade do usuário é lida de `client.handshake.query.userId` **sem verificar nenhum token** — qualquer cliente pode se passar por outro usuário informando um `userId`. Da mesma forma, `join_project` **não valida se o usuário tem acesso ao projeto** antes de entrar na sala. Trate os itens abaixo como comportamento atual vs. recomendado:
+
+- ❌ Autenticação via JWT no handshake — **NÃO implementada** (usa `handshake.query.userId` sem validação). **Recomendado** validar o `access_token` no handshake.
+- ❌ Validação de acesso ao projeto antes de juntar sala — **NÃO implementada** (`join_project` não checa permissão). **Recomendado** verificar associação ao projeto.
+- ✅ Rooms isoladas por projeto (broadcast só chega a quem está na sala)
+- ✅ Notificações direcionadas por sala de usuário (`user:<id>`)
 
 ## 📈 Performance
 

@@ -39,7 +39,7 @@ Professional dark mode system inspired by Linear's industry-leading implementati
 ### 1. Add Theme Switcher
 
 ```tsx
-import { ThemeSwitcher } from '@/components/theme';
+import { ThemeSwitcher } from '@/components/common/theme';
 
 // Compact dropdown
 <ThemeSwitcher variant="compact" />
@@ -278,7 +278,7 @@ text-red-600 dark:text-red-400
 ### Basic Usage
 
 ```tsx
-import { CodeBlock, InlineCode } from '@/components/theme';
+import { CodeBlock, InlineCode } from '@/components/common/theme';
 
 // Code block with syntax highlighting
 <CodeBlock
@@ -529,10 +529,11 @@ apps/web/src/
 ├── contexts/
 │   └── ThemeContext.tsx          # Theme provider & hook
 ├── components/
-│   └── theme/
-│       ├── ThemeSwitcher.tsx     # Theme switcher components
-│       ├── CodeBlock.tsx         # Syntax highlighting
-│       └── index.ts              # Exports
+│   └── common/
+│       └── theme/
+│           ├── ThemeSwitcher.tsx     # Theme switcher components
+│           ├── CodeBlock.tsx         # Syntax highlighting
+│           └── index.ts              # Exports
 ├── app/
 │   ├── globals.css               # Dark mode styles
 │   ├── layout.tsx                # Root layout with theme

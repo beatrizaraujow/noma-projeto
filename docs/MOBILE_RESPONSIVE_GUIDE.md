@@ -14,7 +14,7 @@ Todos os componentes mobile-first foram implementados com Framer Motion e React 
 Bottom tabs com animações e indicador ativo.
 
 ```tsx
-import { MobileBottomNav } from '@/components/mobile';
+import { MobileBottomNav } from '@/components/layout/mobile';
 
 const navItems = [
   { icon: <HomeIcon />, label: 'Home', href: '/' },
@@ -29,7 +29,7 @@ const navItems = [
 Menu hamburger com drawer lateral.
 
 ```tsx
-import { MobileHamburger } from '@/components/mobile';
+import { MobileHamburger } from '@/components/layout/mobile';
 
 <MobileHamburger>
   <nav>
@@ -47,7 +47,7 @@ import { MobileHamburger } from '@/components/mobile';
 Botões com tap targets maiores (min 44px).
 
 ```tsx
-import { TouchButton, TouchIconButton } from '@/components/mobile';
+import { TouchButton, TouchIconButton } from '@/components/layout/mobile';
 
 <TouchButton variant="primary" size="lg" fullWidth>
   Salvar
@@ -69,7 +69,7 @@ import { TouchButton, TouchIconButton } from '@/components/mobile';
 Cards com gestos de swipe para ações.
 
 ```tsx
-import { SwipeableCard } from '@/components/mobile';
+import { SwipeableCard } from '@/components/layout/mobile';
 
 <SwipeableCard
   onSwipeLeft={() => deleteTask(id)}
@@ -88,7 +88,7 @@ import { SwipeableCard } from '@/components/mobile';
 ### 4. ✅ Pull to Refresh
 
 ```tsx
-import { PullToRefresh } from '@/components/mobile';
+import { PullToRefresh } from '@/components/layout/mobile';
 
 <PullToRefresh onRefresh={async () => await loadData()}>
   <YourContent />
@@ -108,7 +108,7 @@ import { PullToRefresh } from '@/components/mobile';
 Layout adaptativo com sidebar→drawer no mobile.
 
 ```tsx
-import { ResponsiveLayout } from '@/components/mobile';
+import { ResponsiveLayout } from '@/components/layout/mobile';
 
 <ResponsiveLayout
   sidebar={<Sidebar />}
@@ -122,7 +122,7 @@ import { ResponsiveLayout } from '@/components/mobile';
 Board com scroll horizontal→vertical.
 
 ```tsx
-import { ResponsiveBoardLayout } from '@/components/mobile';
+import { ResponsiveBoardLayout } from '@/components/layout/mobile';
 
 <ResponsiveBoardLayout>
   <Column title="Todo" />
@@ -138,7 +138,7 @@ import { ResponsiveBoardLayout } from '@/components/mobile';
 Grid adaptativo por breakpoint.
 
 ```tsx
-import { ResponsiveGrid } from '@/components/mobile';
+import { ResponsiveGrid } from '@/components/layout/mobile';
 
 <ResponsiveGrid columns={{ mobile: 1, tablet: 2, desktop: 3 }}>
   {cards.map(card => <Card key={card.id} {...card} />)}
@@ -153,7 +153,7 @@ import { ResponsiveGrid } from '@/components/mobile';
 Drawer lateral/inferior.
 
 ```tsx
-import { MobileDrawer } from '@/components/mobile';
+import { MobileDrawer } from '@/components/layout/mobile';
 
 <MobileDrawer
   isOpen={isOpen}
@@ -169,7 +169,7 @@ import { MobileDrawer } from '@/components/mobile';
 Modal responsivo (fullscreen no mobile).
 
 ```tsx
-import { MobileModal } from '@/components/mobile';
+import { MobileModal } from '@/components/layout/mobile';
 
 <MobileModal
   isOpen={isOpen}
@@ -186,7 +186,7 @@ import { MobileModal } from '@/components/mobile';
 ### 7. ✅ FAB (Floating Action Button)
 
 ```tsx
-import { FAB } from '@/components/mobile';
+import { FAB } from '@/components/layout/mobile';
 
 <FAB
   icon={<PlusIcon />}
@@ -205,7 +205,7 @@ import { FAB } from '@/components/mobile';
 Componente completo para adicionar tasks rapidamente.
 
 ```tsx
-import { QuickAddTask } from '@/components/mobile';
+import { QuickAddTask } from '@/components/layout/mobile';
 
 <QuickAddTask
   onAdd={(task) => {
@@ -281,7 +281,7 @@ import {
   FAB,
   PullToRefresh,
   QuickAddTask
-} from '@/components/mobile';
+} from '@/components/layout/mobile';
 
 export default function TasksPage() {
   const navItems = [
@@ -321,7 +321,7 @@ export default function TasksPage() {
 ### Board Responsivo
 
 ```tsx
-import { ResponsiveBoardLayout } from '@/components/mobile';
+import { ResponsiveBoardLayout } from '@/components/layout/mobile';
 
 export function KanbanBoard() {
   return (
@@ -345,7 +345,7 @@ export function KanbanBoard() {
 
 ```tsx
 import { useMobileDetect } from '@/hooks/useMobileDetect';
-import { MobileDrawer } from '@/components/mobile';
+import { MobileDrawer } from '@/components/layout/mobile';
 
 export function Layout() {
   const { isMobile } = useMobileDetect();
@@ -486,7 +486,7 @@ apps/web/src/
 │   ├── useMobileDetect.ts       # Detecta mobile/tablet/desktop
 │   ├── useSwipeGesture.ts       # Hook para swipes
 │   └── usePullToRefresh.ts      # Hook para pull-to-refresh
-├── components/mobile/
+├── components/layout/mobile/
 │   ├── MobileBottomNav.tsx      # Bottom tabs
 │   ├── MobileHamburger.tsx      # Burger menu
 │   ├── SwipeableCard.tsx        # Cards com swipe

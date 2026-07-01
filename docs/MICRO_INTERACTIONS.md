@@ -27,7 +27,7 @@ Todos os 6 entregáveis foram implementados e testados:
 - Padrões recomendados
 
 ### 📚 Documentação Completa
-**[src/components/animations/README.md](../apps/web/src/components/animations/README.md)**
+**[src/components/common/animations/README.md](../apps/web/src/components/common/animations/README.md)**
 - API completa de todos os componentes
 - Props e variantes
 - Melhores práticas
@@ -103,7 +103,7 @@ Acesse: **http://localhost:3000/showcase**
 
 ### 1. Importe
 ```tsx
-import { AnimatedButton, AnimatedCard, PageTransition } from '@/components/animations';
+import { AnimatedButton, AnimatedCard, PageTransition } from '@/components/common/animations';
 ```
 
 ### 2. Use
@@ -126,16 +126,17 @@ import { AnimatedButton, AnimatedCard, PageTransition } from '@/components/anima
 NOMA/
 ├── apps/web/src/
 │   ├── components/
-│   │   ├── animations/
-│   │   │   ├── index.ts                    # Exports
-│   │   │   ├── variants.ts                 # Variantes
-│   │   │   ├── AnimatedButton.tsx          # ✅ Botões
-│   │   │   ├── AnimatedCard.tsx            # ✅ Cards
-│   │   │   ├── PageTransition.tsx          # ✅ Transições
-│   │   │   ├── SkeletonLoader.tsx          # ✅ Loaders
-│   │   │   ├── SuccessAnimation.tsx        # ✅ Sucesso
-│   │   │   ├── DragFeedback.tsx            # ✅ Drag
-│   │   │   └── README.md                   # Docs completa
+│   │   ├── common/
+│   │   │   └── animations/
+│   │   │       ├── index.ts                # Exports
+│   │   │       ├── variants.ts             # Variantes
+│   │   │       ├── AnimatedButton.tsx      # ✅ Botões
+│   │   │       ├── AnimatedCard.tsx        # ✅ Cards
+│   │   │       ├── PageTransition.tsx      # ✅ Transições
+│   │   │       ├── SkeletonLoader.tsx      # ✅ Loaders
+│   │   │       ├── SuccessAnimation.tsx    # ✅ Sucesso
+│   │   │       ├── DragFeedback.tsx        # ✅ Drag
+│   │   │       └── README.md               # Docs completa
 │   │   └── AnimationShowcase.tsx            # Showcase
 │   └── app/
 │       └── showcase/
@@ -202,7 +203,7 @@ const myVariants: Variants = {
 </motion.div>
 ```
 
-Veja mais em: [README.md - Customização](../apps/web/src/components/animations/README.md#-customização)
+Veja mais em: [README.md - Customização](../apps/web/src/components/common/animations/README.md#-customização)
 
 ---
 
@@ -238,7 +239,7 @@ Verifique o [Troubleshooting](./MICRO_INTERACTIONS_SUMMARY.md#-troubleshooting)
 Consulte os [Exemplos](./ANIMATIONS_EXAMPLES.md)
 
 ### Quer customizar?
-Veja a [Documentação completa](../apps/web/src/components/animations/README.md)
+Veja a [Documentação completa](../apps/web/src/components/common/animations/README.md)
 
 ---
 
@@ -290,7 +291,7 @@ Sistema completo de micro-interações implementado com **Framer Motion**, pront
 3. [ANIMATIONS_CATALOG.md](./ANIMATIONS_CATALOG.md)
 4. [ANIMATIONS_EXAMPLES.md](./ANIMATIONS_EXAMPLES.md)
 5. [MICRO_INTERACTIONS_SUMMARY.md](./MICRO_INTERACTIONS_SUMMARY.md)
-6. [components/animations/README.md](../apps/web/src/components/animations/README.md)
+6. [components/common/animations/README.md](../apps/web/src/components/common/animations/README.md)
 
 ---
 

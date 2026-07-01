@@ -17,7 +17,7 @@
 - [ ] JWT_SECRET gerado (forte, único)
 - [ ] NEXTAUTH_SECRET gerado (forte, único)
 - [ ] DATABASE_URL configurada
-- [ ] REDIS_URL configurada
+- [ ] REDIS_URL configurada (OPCIONAL — Redis não está integrado à API; `bull`/`ioredis` estão inertes. Só necessário se/quando filas forem ativadas)
 - [ ] CORS configurado corretamente
 
 ### Banco de Dados
@@ -43,13 +43,14 @@
 #### Railway/Cloud
 - [ ] Projeto criado no Railway
 - [ ] PostgreSQL provisionado
-- [ ] Redis provisionado
+- [ ] Redis provisionado (OPCIONAL/dev — não integrado à API; pode pular)
 - [ ] Variáveis de ambiente configuradas
 - [ ] Build command configurado: `cd ../.. && pnpm install && pnpm build --filter=@nexora/api`
-- [ ] Start command configurado: `cd apps/api && pnpm start:prod`
+- [ ] Start command real (via Dockerfile): `prisma db push` no boot, depois `node dist/main`
 - [ ] Deploy executado
-- [ ] Migrations rodadas
-- [ ] Health check passou (`/health`)
+- [ ] Schema sincronizado com `prisma db push` (não há migrations versionadas)
+- [ ] Health check passou (`/api/health`)
+- [ ] Swagger acessível (`/api/docs`)
 - [ ] API URL anotada
 
 #### VPS
