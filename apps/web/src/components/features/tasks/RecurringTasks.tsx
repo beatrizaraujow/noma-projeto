@@ -45,7 +45,7 @@ export default function RecurringTasks({ projectId, token }: RecurringTasksProps
 
   const loadRecurringTasks = async () => {
     try {
-      const response = await axios.get(`${API_URL}/automation/recurring-tasks`, {
+      const response = await axios.get(`${API_URL}/api/automation/recurring-tasks`, {
         params: { projectId },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -58,7 +58,7 @@ export default function RecurringTasks({ projectId, token }: RecurringTasksProps
   const handleCreate = async () => {
     try {
       await axios.post(
-        `${API_URL}/automation/recurring-tasks`,
+        `${API_URL}/api/automation/recurring-tasks`,
         {
           projectId,
           title: formData.title,
@@ -88,7 +88,7 @@ export default function RecurringTasks({ projectId, token }: RecurringTasksProps
     if (!confirm('Delete this recurring task?')) return;
 
     try {
-      await axios.delete(`${API_URL}/automation/recurring-tasks/${taskId}`, {
+      await axios.delete(`${API_URL}/api/automation/recurring-tasks/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await loadRecurringTasks();

@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await fetch(`${API_URL}/saved-filters/${params.id}`, {
+    const response = await fetch(`${API_URL}/api/saved-filters/${params.id}`, {
       headers: await getAuthHeaders(),
     });
 
@@ -44,7 +44,7 @@ export async function PUT(
 
     const body = await request.json();
 
-    const response = await fetch(`${API_URL}/saved-filters/${params.id}`, {
+    const response = await fetch(`${API_URL}/api/saved-filters/${params.id}`, {
       method: 'PUT',
       headers: await getAuthHeaders(),
       body: JSON.stringify(body),
@@ -73,7 +73,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await fetch(`${API_URL}/saved-filters/${params.id}`, {
+    const response = await fetch(`${API_URL}/api/saved-filters/${params.id}`, {
       method: 'DELETE',
       headers: await getAuthHeaders(),
     });

@@ -67,7 +67,7 @@ export default function ProjectProgressTracker({
     try {
       setLoading(true);
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/project-progress`,
+        `${API_URL}/api/analytics/workspaces/${workspaceId}/project-progress`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setProjects(response.data);

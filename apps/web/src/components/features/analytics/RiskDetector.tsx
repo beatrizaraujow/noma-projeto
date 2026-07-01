@@ -52,7 +52,7 @@ export default function RiskDetector({
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/detect-risks`,
+        `${API_URL}/api/ai/detect-risks`,
         {
           name: projectName,
           tasks,

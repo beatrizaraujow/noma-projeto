@@ -84,7 +84,7 @@ export default function WorkspaceDashboard({ workspaceId, token }: WorkspaceDash
     try {
       setLoading(true);
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/dashboard`,
+        `${API_URL}/api/analytics/workspaces/${workspaceId}/dashboard`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setData(response.data);

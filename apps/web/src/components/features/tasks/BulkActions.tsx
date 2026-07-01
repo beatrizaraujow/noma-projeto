@@ -60,7 +60,7 @@ export default function BulkActions({
       setResult(null);
 
       const response = await axios.post(
-        `${API_URL}/automation/bulk-actions`,
+        `${API_URL}/api/automation/bulk-actions`,
         {
           action: selectedAction,
           taskIds: selectedTaskIds,

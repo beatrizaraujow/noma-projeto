@@ -48,7 +48,7 @@ export default function AutoAssignRules({
 
   const loadRules = async () => {
     try {
-      const response = await axios.get(`${API_URL}/automation/auto-assign-rules`, {
+      const response = await axios.get(`${API_URL}/api/automation/auto-assign-rules`, {
         params: { workspaceId, projectId },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -61,7 +61,7 @@ export default function AutoAssignRules({
   const handleCreate = async () => {
     try {
       await axios.post(
-        `${API_URL}/automation/auto-assign-rules`,
+        `${API_URL}/api/automation/auto-assign-rules`,
         {
           workspaceId,
           projectId,
@@ -97,7 +97,7 @@ export default function AutoAssignRules({
     if (!confirm('Delete this rule?')) return;
 
     try {
-      await axios.delete(`${API_URL}/automation/auto-assign-rules/${ruleId}`, {
+      await axios.delete(`${API_URL}/api/automation/auto-assign-rules/${ruleId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await loadRules();

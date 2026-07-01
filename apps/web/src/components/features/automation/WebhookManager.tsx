@@ -33,10 +33,10 @@ export default function WebhookManager({ workspaceId, token }: WebhookManagerPro
     try {
       setLoading(true);
       const [webhooksRes, workflowsRes] = await Promise.all([
-        axios.get(`${API_URL}/workflows/webhooks/workspace/${workspaceId}`, {
+        axios.get(`${API_URL}/api/workflows/webhooks/workspace/${workspaceId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get(`${API_URL}/workflows/workspace/${workspaceId}`, {
+        axios.get(`${API_URL}/api/workflows/workspace/${workspaceId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -58,7 +58,7 @@ export default function WebhookManager({ workspaceId, token }: WebhookManagerPro
     try {
       setLoading(true);
       await axios.post(
-        `${API_URL}/workflows/webhooks`,
+        `${API_URL}/api/workflows/webhooks`,
         {
           workspaceId,
           ...newWebhook,
@@ -83,7 +83,7 @@ export default function WebhookManager({ workspaceId, token }: WebhookManagerPro
     if (!confirm('Delete this webhook?')) return;
 
     try {
-      await axios.delete(`${API_URL}/workflows/webhooks/${id}`, {
+      await axios.delete(`${API_URL}/api/workflows/webhooks/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await loadData();
@@ -93,7 +93,7 @@ export default function WebhookManager({ workspaceId, token }: WebhookManagerPro
   };
 
   const copyWebhookUrl = (url: string) => {
-    navigator.clipboard.writeText(`${API_URL}/workflows/webhooks/${url}/trigger`);
+    navigator.clipboard.writeText(`${API_URL}/api/workflows/webhooks/${url}/trigger`);
     alert('Webhook URL copied to clipboard!');
   };
 

@@ -85,8 +85,8 @@ export default function TasksPage() {
       setLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
       const [projectsRes, tasksRes] = await Promise.all([
-        axios.get(`${API_URL}/projects?workspaceId=${workspaceId}`, { headers }),
-        axios.get(`${API_URL}/tasks?workspaceId=${workspaceId}`, { headers }),
+        axios.get(`${API_URL}/api/projects?workspaceId=${workspaceId}`, { headers }),
+        axios.get(`${API_URL}/api/tasks?workspaceId=${workspaceId}`, { headers }),
       ]);
       setProjects(projectsRes.data || []);
       setTasks(tasksRes.data || []);

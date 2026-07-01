@@ -48,7 +48,7 @@ export default function TaskFormModal({ workspaceId, projects, task, token, onCl
 
   useEffect(() => {
     if (!token || !workspaceId) return;
-    axios.get(`${API_URL}/workspaces/${workspaceId}/members`, {
+    axios.get(`${API_URL}/api/workspaces/${workspaceId}/members`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then((r) => setMembers(r.data?.members ?? [])).catch(() => {});
   }, [token, workspaceId]);
@@ -71,9 +71,9 @@ export default function TaskFormModal({ workspaceId, projects, task, token, onCl
         estimatedHours: estimatedHours ? Number(estimatedHours) : undefined,
       };
       if (isEdit) {
-        await axios.put(`${API_URL}/tasks/${task!.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`${API_URL}/api/tasks/${task!.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
       } else {
-        await axios.post(`${API_URL}/tasks`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post(`${API_URL}/api/tasks`, payload, { headers: { Authorization: `Bearer ${token}` } });
       }
       onSaved();
     } catch {

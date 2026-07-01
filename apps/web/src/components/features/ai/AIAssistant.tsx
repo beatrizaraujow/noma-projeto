@@ -25,7 +25,7 @@ export default function AIAssistant({ token, onSuggestionApply }: AIAssistantPro
 
   const checkAIStatus = async () => {
     try {
-      const response = await axios.get(`${API_URL}/ai/status`, {
+      const response = await axios.get(`${API_URL}/api/ai/status`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAiEnabled(response.data.enabled);
@@ -45,7 +45,7 @@ export default function AIAssistant({ token, onSuggestionApply }: AIAssistantPro
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/suggest-title`,
+        `${API_URL}/api/ai/suggest-title`,
         { context, projectName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -77,7 +77,7 @@ export default function AIAssistant({ token, onSuggestionApply }: AIAssistantPro
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/predict-due-date`,
+        `${API_URL}/api/ai/predict-due-date`,
         { taskTitle, taskDescription, projectContext },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -105,7 +105,7 @@ export default function AIAssistant({ token, onSuggestionApply }: AIAssistantPro
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/enhance-description`,
+        `${API_URL}/api/ai/enhance-description`,
         { title, currentDescription },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -133,7 +133,7 @@ export default function AIAssistant({ token, onSuggestionApply }: AIAssistantPro
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/categorize-task`,
+        `${API_URL}/api/ai/categorize-task`,
         { title, description },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -161,7 +161,7 @@ export default function AIAssistant({ token, onSuggestionApply }: AIAssistantPro
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/analyze-complexity`,
+        `${API_URL}/api/ai/analyze-complexity`,
         { title, description },
         { headers: { Authorization: `Bearer ${token}` } }
       );

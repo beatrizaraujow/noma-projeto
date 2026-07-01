@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       ...(entityType && { entityType }),
     });
 
-    const response = await fetch(`${API_URL}/saved-filters?${params}`, {
+    const response = await fetch(`${API_URL}/api/saved-filters?${params}`, {
       headers: await getAuthHeaders(),
     });
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(`${API_URL}/saved-filters`, {
+    const response = await fetch(`${API_URL}/api/saved-filters`, {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify(body),

@@ -40,7 +40,7 @@ export default function ProjectTemplates({
   const loadTemplates = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/automation/templates`, {
+      const response = await axios.get(`${API_URL}/api/automation/templates`, {
         params: { workspaceId },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -61,7 +61,7 @@ export default function ProjectTemplates({
     try {
       setLoading(true);
       const response = await axios.post(
-        `${API_URL}/automation/templates/${selectedTemplate.id}/apply`,
+        `${API_URL}/api/automation/templates/${selectedTemplate.id}/apply`,
         { projectId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
