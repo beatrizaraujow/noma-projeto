@@ -1,286 +1,130 @@
-# NexORA Project Architecture
+# Arquitetura do NOMA
 
-## System Overview
+> O produto é **NOMA**; o código usa o namespace legado **`@nexora/*`**. Este documento descreve a arquitetura **real e em execução** — dependências declaradas mas inativas estão marcadas explicitamente.
 
-NexORA é uma plataforma enterprise de gerenciamento de tarefas construída com arquitetura de microsserviços usando um monorepo Turborepo.
+## Visão geral
 
-## Architecture Layers
+NOMA é uma plataforma de gestão de projetos e tarefas (estilo ClickUp) construída como **monorepo Turborepo** com dois apps sobre pacotes compartilhados. **Não** é uma arquitetura de microsserviços — são dois serviços (web + api) mais o banco.
 
-### 1. Presentation Layer (Frontend)
-- **Framework:** Next.js 14 with App Router
-- **Rendering:** SSR (Server-Side Rendering) + SSG (Static Site Generation)
-- **State Management:** Zustand (global) + TanStack Query (server state)
-- **Real-time:** Socket.io client
-- **Styling:** Tailwind CSS + Shadcn/ui components
+## Camadas
 
-### 2. Application Layer (Backend)
-- **Framework:** NestJS with modular architecture
-- **API Styles:**
-  - REST API (primary)
-  - GraphQL (Apollo Server)
-  - WebSockets (Socket.io)
-- **Authentication:** JWT + Passport strategies
-- **Authorization:** RBAC (Role-Based Access Control)
+### 1. Frontend (`apps/web`)
+- **Framework:** Next.js 14 (App Router) + React 18 — porta 3000
+- **Estado:** React Context (`ThemeContext`, Toast, Onboarding) + **TanStack Query** para dados de servidor
+  - Zustand está no `package.json` mas **NÃO é usado**.
+- **Dados:** axios (`src/lib/api-client.ts`) com `Bearer <accessToken>`; `useCreateTask`/`useUpdateTask` usam optimistic updates
+- **Tempo real:** cliente Socket.io (`src/hooks/useWebSocket.ts`)
+- **Estilo:** Tailwind CSS + Radix + CVA (design system em `packages/ui`)
+  - Não usa Shadcn/ui nem next-themes; o tema vem do `ThemeContext` (localStorage `noma-theme-mode`).
 
-### 3. Data Layer
-```
-┌─────────────────────────────────────────┐
-│           Data Access Layer             │
-├─────────────────────────────────────────┤
-│                                         │
-│  ┌──────────┐  ┌──────────┐           │
-│  │ Prisma   │  │ Mongoose │           │
-│  │ (ORM)    │  │ (ODM)    │           │
-│  └────┬─────┘  └────┬─────┘           │
-│       │             │                  │
-│       ▼             ▼                  │
-│  ┌──────────┐  ┌──────────┐           │
-│  │PostgreSQL│  │ MongoDB  │           │
-│  └──────────┘  └──────────┘           │
-│                                         │
-│  ┌──────────┐  ┌──────────┐           │
-│  │  Redis   │  │Elastic-  │           │
-│  │  Cache   │  │ search   │           │
-│  └──────────┘  └──────────┘           │
-└─────────────────────────────────────────┘
-```
+### 2. Backend (`apps/api`)
+- **Framework:** NestJS 10 (modular), build via webpack — porta 3001, prefixo global `/api`, Swagger em `/api/docs`
+- **API:** **REST** (única ativa)
+  - GraphQL/Apollo (`GraphQLModule.forRoot`) está **comentado** em `app.module.ts`.
+  - WebSockets via Socket.io para eventos de task/comentário, presença e notificações.
+- **Autenticação:** JWT (`@nestjs/jwt`) + Passport (`passport-jwt`/`passport-local`), bcrypt, refresh token. `main.ts` aborta o boot se `JWT_SECRET` não estiver definido.
+- **Autorização:** verificação por usuário/membership nos services. O módulo de permissões granulares (`modules/permissions`, RBAC) existe mas **NÃO está registrado** em `app.module.ts` — é código morto no app em execução.
 
-## Data Flow
-
-### Request Flow (REST API)
-```
-Client Request
-    ↓
-Next.js Middleware (Auth check)
-    ↓
-API Route Handler
-    ↓
-NestJS Controller
-    ↓
-Service Layer (Business Logic)
-    ↓
-Repository/Prisma (Data Access)
-    ↓
-Database
-    ↓
-Response Pipeline
-    ↓
-Client
-```
-
-### WebSocket Flow
-```
-Client Connection
-    ↓
-Socket.io Gateway
-    ↓
-Authentication
-    ↓
-Join Room (Project/Task)
-    ↓
-Event Handlers
-    ↓
-Broadcast to Room
-    ↓
-Real-time Update
-```
-
-## Module Structure
-
-### Backend Modules
+### 3. Dados
+- **PostgreSQL via Prisma** (`packages/database`) é a fonte única do modelo (~35 models).
+- **NÃO ativos** (declarados no `package.json`, sem wiring efetivo): MongoDB/Mongoose, Elasticsearch, Bull/Redis queues. A busca (`modules/search`) roda sobre Postgres.
+- **Fluxo de schema:** `prisma db push` (não migrations versionadas). O container da API roda `prisma db push --accept-data-loss` no boot.
 
 ```
-src/
-├── modules/
-│   ├── auth/           # Authentication & Authorization
-│   ├── users/          # User management
-│   ├── projects/       # Project CRUD
-│   ├── tasks/          # Task management
-│   ├── comments/       # Comments system
-│   ├── activities/     # Activity logs
-│   ├── websocket/      # Real-time gateway
-│   └── database/       # Database connections
+┌──────────────┐     REST /api      ┌──────────────┐    Prisma    ┌────────────┐
+│  apps/web    │ ─────────────────▶ │  apps/api    │ ───────────▶ │ PostgreSQL │
+│  Next.js     │ ◀───────────────── │  NestJS      │ ◀─────────── │            │
+│  (3000)      │     Socket.io      │  (3001)      │              └────────────┘
+└──────────────┘                    └──────────────┘
 ```
 
-### Frontend Structure
+## Fluxo de requisição (REST)
 
 ```
-src/
-├── app/                # Next.js App Router
-│   ├── (auth)/        # Auth pages
-│   ├── (dashboard)/   # Dashboard pages
-│   └── api/           # API routes
-├── components/
-│   ├── ui/            # Base UI components
-│   ├── features/      # Feature components
-│   └── layout/        # Layout components
-├── lib/
-│   ├── api/           # API client
-│   ├── hooks/         # Custom hooks
-│   └── utils/         # Utilities
-└── stores/            # Zustand stores
-```
-
-## Shared Packages
-
-### @nexora/types
-- Shared TypeScript interfaces and types
-- DTOs (Data Transfer Objects)
-- API response types
-
-### @nexora/ui
-- Reusable UI components
-- Based on Shadcn/ui
-- Shared across frontend apps
-
-### @nexora/database
-- Prisma schema
-- Database client
-- Migrations
-
-### @nexora/config
-- Shared configuration
-- Constants
-- Environment-specific configs
-
-## Security Architecture
-
-### Authentication Flow
-```
-1. User Login → Credentials
-2. Backend validates → User exists?
-3. Password check → bcrypt.compare()
-4. Generate JWT → access_token + refresh_token
-5. Store refresh token → Database/Redis
-6. Return tokens → Client
-7. Client stores → httpOnly cookie (refresh) + memory (access)
-8. Subsequent requests → Bearer token in header
-9. Token validation → JWT verify middleware
-10. Access granted → Continue to route handler
-```
-
-### Authorization Levels
-- **PUBLIC:** No authentication required
-- **AUTHENTICATED:** Valid JWT required
-- **ROLE-BASED:** Specific role required (USER, ADMIN)
-- **RESOURCE-BASED:** Owner or member of resource
-
-## Caching Strategy
-
-### Multi-Level Cache
-```
-Request
+Cliente (React Query → axios, Bearer token)
     ↓
-1. Browser Cache (static assets)
+NestJS Controller  (ValidationPipe global: whitelist + forbidNonWhitelisted)
     ↓
-2. CDN Cache (Cloudflare)
+Service (regra de negócio + verificação de acesso)
     ↓
-3. Redis Cache (API responses)
+PrismaService
     ↓
-4. Prisma Query Cache
+PostgreSQL
     ↓
-5. Database
+Resposta → invalidação de cache no React Query
 ```
 
-### Cache Invalidation
-- **Time-based:** TTL expiration
-- **Event-based:** On data mutations
-- **Manual:** Admin trigger
+## Fluxo WebSocket
 
-## Scalability Considerations
-
-### Horizontal Scaling
-- Stateless backend services
-- Load balancer (NGINX)
-- Session store in Redis
-- Database read replicas
-
-### Vertical Scaling
-- Optimized queries
-- Database indexing
-- Connection pooling
-- Query result caching
-
-## Monitoring & Observability
-
-### Metrics
-- **APM:** Application Performance Monitoring
-- **Logs:** Centralized logging (Winston/Pino)
-- **Traces:** Distributed tracing
-- **Alerts:** Error threshold alerts
-
-### Health Checks
-- Database connectivity
-- Redis availability
-- API response times
-- Error rates
-
-## Deployment Architecture
-
-### Production Setup
 ```
-┌─────────────────────────────────────┐
-│         Load Balancer               │
-│         (NGINX/AWS ALB)             │
-└─────────────┬───────────────────────┘
-              │
-    ┌─────────┴──────────┐
-    │                    │
-    ▼                    ▼
-┌─────────┐        ┌─────────┐
-│Frontend │        │Backend  │
-│Next.js  │        │NestJS   │
-│(3 inst.)│        │(5 inst.)│
-└────┬────┘        └────┬────┘
-     │                  │
-     └────────┬─────────┘
-              │
-    ┌─────────┴──────────┐
-    │                    │
-    ▼                    ▼
-┌─────────┐        ┌─────────┐
-│Database │        │  Cache  │
-│Cluster  │        │  Redis  │
-└─────────┘        └─────────┘
+Conexão do cliente → Socket.io Gateway → autenticação →
+join room (workspace/task) → handlers de evento → broadcast para a room → update em tempo real
 ```
 
-## Technology Decisions
+## Módulos do backend
 
-### Why Turborepo?
-- Efficient monorepo management
-- Incremental builds
-- Remote caching
-- Parallel execution
+`apps/api/src/modules/`: `auth`, `users`, `workspaces`, `invites`, `projects`, `tasks`, `routines`,
+`comments`, `activities`, `attachments`, `search`, `saved-filters`, `analytics`, `ai`,
+`automation`, `workflow`, `integrations`, `permissions`*, `websocket`, `database`.
 
-### Why Next.js?
-- SSR/SSG capabilities
-- API routes
-- Image optimization
-- Excellent DX
+\* `permissions` não está montado (ver acima).
 
-### Why NestJS?
-- TypeScript-first
-- Modular architecture
-- Dependency injection
-- Enterprise-ready
+**Pegadinhas conhecidas:**
+- `comments`, `activities` e `attachments` declaram `@Controller('api/...')`, então com o prefixo global o caminho real fica **`/api/api/...`**.
+- `ThrottlerModule` está configurado, mas nenhum `ThrottlerGuard` é aplicado — **não há rate limiting efetivo**.
+- `PrismaService` tolera DB offline no init (só warning); erros de query só aparecem em runtime.
 
-### Why PostgreSQL?
-- ACID compliance
-- Complex queries
-- Mature ecosystem
-- JSON support
+## Estrutura do frontend
 
-### Why Redis?
-- Fast in-memory storage
-- Pub/Sub for real-time
-- Session management
-- Rate limiting
+```
+apps/web/src/
+├── app/               # Next.js App Router
+│   ├── workspaces/    # superfície principal (estilo ClickUp): tasks, routines, analytics
+│   └── projects/      # superfície legada com ViewSwitcher (Kanban/Lista/Calendário/Timeline)
+├── components/        # componentes de feature/layout
+├── hooks/             # useQueries (React Query), useWebSocket
+└── lib/               # api-client (axios), auth-options (NextAuth), query-config
+```
 
-## Future Enhancements
+> Duas superfícies de tarefas coexistem. Prefira `workspaces` para features novas.
 
-- [ ] Kubernetes orchestration
-- [ ] Service mesh (Istio)
-- [ ] Event-driven architecture (Kafka)
-- [ ] CQRS pattern implementation
-- [ ] GraphQL Federation
-- [ ] Microservices decomposition
+## Pacotes compartilhados
+
+| Pacote | Conteúdo |
+| --- | --- |
+| `@nexora/database` | Schema Prisma + client Postgres (fonte do modelo) |
+| `@nexora/ui` | Design system Radix + CVA + Tailwind (componentes em `packages/ui/components/`) |
+| `@nexora/types` | Tipos compartilhados web ↔ api |
+| `@nexora/config` | Configs base de eslint/tsconfig/tailwind |
+
+## Autenticação (duas camadas)
+
+```
+1. Login → NextAuth CredentialsProvider faz POST /api/auth/login (backend)
+2. Backend valida (bcrypt) e emite JWT real (access + refresh)
+3. NextAuth guarda o access_token na sessão; callback JWT renova via /api/auth/refresh
+4. axios injeta Bearer <accessToken> em toda request
+5. 401 → redireciona para /login
+```
+
+Ao mexer em auth, **os dois lados precisam estar coerentes**.
+
+## Deploy
+
+- **Frontend → Vercel** (`apps/web/vercel.json`).
+- **Backend → Railway** via `apps/api/Dockerfile` (node:20-alpine, `prisma db push` no boot, `node dist/main`). O domínio do Railway **deve apontar para a porta 3001** — porta errada causa 502.
+- **CI:** GitHub Actions (`.github/workflows/ci-cd.yml`): lint → type-check → test → build.
+
+## Decisões de tecnologia
+
+- **Turborepo** — builds incrementais e execução paralela no monorepo.
+- **Next.js 14** — App Router, SSR/SSG, ótimo DX.
+- **NestJS** — TypeScript-first, arquitetura modular, DI.
+- **PostgreSQL + Prisma** — ACID, type-safety, prevenção de SQL injection.
+
+## Melhorias futuras (não implementadas)
+
+- [ ] Ativar/registrar o módulo de permissões (RBAC granular)
+- [ ] Aplicar `ThrottlerGuard` para rate limiting efetivo
+- [ ] Corrigir prefixo duplicado `/api/api/*` em comments/activities/attachments
+- [ ] Migrar para migrations versionadas do Prisma (hoje é `db push`)
