@@ -47,7 +47,7 @@ export default function TriggerManager({
 
   const loadTriggers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/automation/triggers`, {
+      const response = await axios.get(`${API_URL}/api/automation/triggers`, {
         params: { workspaceId, projectId },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -64,7 +64,7 @@ export default function TriggerManager({
   const handleCreateTrigger = async () => {
     try {
       await axios.post(
-        `${API_URL}/automation/triggers`,
+        `${API_URL}/api/automation/triggers`,
         {
           workspaceId,
           projectId,
@@ -100,7 +100,7 @@ export default function TriggerManager({
   const handleToggleTrigger = async (triggerId: string, enabled: boolean) => {
     try {
       await axios.put(
-        `${API_URL}/automation/triggers/${triggerId}`,
+        `${API_URL}/api/automation/triggers/${triggerId}`,
         { enabled: !enabled },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -114,7 +114,7 @@ export default function TriggerManager({
     if (!confirm('Delete this trigger?')) return;
 
     try {
-      await axios.delete(`${API_URL}/automation/triggers/${triggerId}`, {
+      await axios.delete(`${API_URL}/api/automation/triggers/${triggerId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await loadTriggers();

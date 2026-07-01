@@ -20,7 +20,7 @@ import * as fs from 'fs';
 
 @ApiTags('attachments')
 @ApiBearerAuth()
-@Controller('api/attachments')
+@Controller('attachments')
 @UseGuards(JwtAuthGuard)
 export class AttachmentsController {
   constructor(private readonly attachmentsService: AttachmentsService) {}

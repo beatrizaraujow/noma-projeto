@@ -50,7 +50,7 @@ export default function EpicBreakdown({
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/breakdown-epic`,
+        `${API_URL}/api/ai/breakdown-epic`,
         {
           epicTitle,
           epicDescription,

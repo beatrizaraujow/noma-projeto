@@ -115,13 +115,13 @@ export default function RoutinesPage() {
     setLoading(true);
     try {
       const [routinesRes, { start, end }] = await Promise.all([
-        axios.get(`${API_URL}/routines?workspaceId=${workspaceId}`, { headers }),
+        axios.get(`${API_URL}/api/routines?workspaceId=${workspaceId}`, { headers }),
         Promise.resolve(getDateRange(frequency, periodOffset)),
       ]);
       setRoutines(routinesRes.data ?? []);
 
       const metricsRes = await axios.get(
-        `${API_URL}/routines/metrics?workspaceId=${workspaceId}&period=${frequency}&start=${start}&end=${end}`,
+        `${API_URL}/api/routines/metrics?workspaceId=${workspaceId}&period=${frequency}&start=${start}&end=${end}`,
         { headers }
       );
       setMetrics(metricsRes.data ?? []);
@@ -138,9 +138,9 @@ export default function RoutinesPage() {
     const periodKey = getPeriodKey(routine.frequency, periodOffset);
     try {
       if (routine.completedByMe) {
-        await axios.delete(`${API_URL}/routines/${routine.id}/complete?periodKey=${periodKey}`, { headers });
+        await axios.delete(`${API_URL}/api/routines/${routine.id}/complete?periodKey=${periodKey}`, { headers });
       } else {
-        await axios.post(`${API_URL}/routines/${routine.id}/complete`, { periodKey }, { headers });
+        await axios.post(`${API_URL}/api/routines/${routine.id}/complete`, { periodKey }, { headers });
       }
       setRoutines((prev) => prev.map((r) => r.id === routine.id ? { ...r, completedByMe: !r.completedByMe } : r));
     } catch {}
@@ -150,7 +150,7 @@ export default function RoutinesPage() {
     if (!newTitle.trim()) return;
     setSaving(true);
     try {
-      await axios.post(`${API_URL}/routines?workspaceId=${workspaceId}`, { title: newTitle, description: newDesc, frequency: newFreq }, { headers });
+      await axios.post(`${API_URL}/api/routines?workspaceId=${workspaceId}`, { title: newTitle, description: newDesc, frequency: newFreq }, { headers });
       setShowNewModal(false);
       setNewTitle(''); setNewDesc('');
       loadRoutines();

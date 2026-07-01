@@ -95,7 +95,7 @@ export default function IntegrationManager({ workspaceId, token }: IntegrationMa
 
   const fetchIntegrations = async () => {
     try {
-      const response = await axios.get(`${API_URL}/integrations`, {
+      const response = await axios.get(`${API_URL}/api/integrations`, {
         params: { workspaceId },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -109,7 +109,7 @@ export default function IntegrationManager({ workspaceId, token }: IntegrationMa
 
   const fetchLogs = async (integrationId: string) => {
     try {
-      const response = await axios.get(`${API_URL}/integrations/${integrationId}/logs`, {
+      const response = await axios.get(`${API_URL}/api/integrations/${integrationId}/logs`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { limit: 10 },
       });
@@ -122,7 +122,7 @@ export default function IntegrationManager({ workspaceId, token }: IntegrationMa
   const createIntegration = async () => {
     try {
       await axios.post(
-        `${API_URL}/integrations`,
+        `${API_URL}/api/integrations`,
         {
           workspaceId,
           type: selectedType,
@@ -146,7 +146,7 @@ export default function IntegrationManager({ workspaceId, token }: IntegrationMa
     if (!confirm('Tem certeza que deseja excluir esta integração?')) return;
 
     try {
-      await axios.delete(`${API_URL}/integrations/${id}`, {
+      await axios.delete(`${API_URL}/api/integrations/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchIntegrations();
@@ -158,7 +158,7 @@ export default function IntegrationManager({ workspaceId, token }: IntegrationMa
   const toggleIntegration = async (id: string, active: boolean) => {
     try {
       await axios.put(
-        `${API_URL}/integrations/${id}`,
+        `${API_URL}/api/integrations/${id}`,
         { active: !active },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -172,7 +172,7 @@ export default function IntegrationManager({ workspaceId, token }: IntegrationMa
     setTesting(id);
     try {
       await axios.post(
-        `${API_URL}/integrations/${id}/test`,
+        `${API_URL}/api/integrations/${id}/test`,
         { message: 'Test message from NOMA' },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -68,7 +68,7 @@ export default function TeamProductivityMetrics({
     try {
       setLoading(true);
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/team-productivity`,
+        `${API_URL}/api/analytics/workspaces/${workspaceId}/team-productivity`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setData(response.data);

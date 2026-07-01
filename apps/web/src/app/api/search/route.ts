@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       ...(workspaceId && { workspaceId }),
     });
 
-    const response = await fetch(`${API_URL}/search?${params}`, {
+    const response = await fetch(`${API_URL}/api/search?${params}`, {
       headers: await getAuthHeaders(),
     });
 

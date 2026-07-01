@@ -44,7 +44,7 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (!token || !workspaceId) return;
-    axios.get(`${API_URL}/tasks/stats?workspaceId=${workspaceId}`, {
+    axios.get(`${API_URL}/api/tasks/stats?workspaceId=${workspaceId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then((r) => setStats(r.data)).catch(() => {});
   }, [token, workspaceId]);

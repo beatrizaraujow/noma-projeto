@@ -22,7 +22,7 @@ export default function DashboardExport({ workspaceId, token }: DashboardExportP
       setExportFormat(format);
 
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/export`,
+        `${API_URL}/api/analytics/workspaces/${workspaceId}/export`,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { format },
@@ -70,7 +70,7 @@ export default function DashboardExport({ workspaceId, token }: DashboardExportP
 
       // Get the data
       const response = await axios.get(
-        `${API_URL}/analytics/workspaces/${workspaceId}/export`,
+        `${API_URL}/api/analytics/workspaces/${workspaceId}/export`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -41,7 +41,7 @@ export default function MeetingNotesConverter({
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/meeting-to-tasks`,
+        `${API_URL}/api/ai/meeting-to-tasks`,
         { meetingNotes: notes },
         { headers: { Authorization: `Bearer ${token}` } }
       );

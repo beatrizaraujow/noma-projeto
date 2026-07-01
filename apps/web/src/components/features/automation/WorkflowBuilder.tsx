@@ -119,7 +119,7 @@ export default function WorkflowBuilder({
     try {
       setLoading(true);
       const response = await axios.post(
-        `${API_URL}/workflows`,
+        `${API_URL}/api/workflows`,
         {
           workspaceId,
           ...workflow,

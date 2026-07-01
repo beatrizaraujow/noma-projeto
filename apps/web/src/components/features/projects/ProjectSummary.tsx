@@ -45,7 +45,7 @@ export default function ProjectSummary({
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/summarize-project`,
+        `${API_URL}/api/ai/summarize-project`,
         {
           name: projectName,
           description: projectDescription,

@@ -44,7 +44,7 @@ export default function SentimentAnalysis({
       setError(null);
 
       const response = await axios.post(
-        `${API_URL}/ai/analyze-sentiment`,
+        `${API_URL}/api/ai/analyze-sentiment`,
         { text, context },
         { headers: { Authorization: `Bearer ${token}` } }
       );
