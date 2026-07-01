@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { TASK_STATUS_CONFIG, TASK_STATUS_GROUPS, TASK_PRIORITY_CONFIG, type TaskStatus, type TaskStatusGroup } from '@nexora/types';
 import TaskFormModal from '@/components/features/tasks/TaskFormModal';
+import { Sidebar } from '@/components/layout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -83,17 +84,12 @@ export default function TasksPage() {
     try {
       setLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
-      const projectsRes = await axios.get(`${API_URL}/projects?workspaceId=${workspaceId}`, { headers });
-      const projectList: Project[] = projectsRes.data || [];
-      setProjects(projectList);
-
-      if (projectList.length > 0) {
-        const taskPromises = projectList.map((p) =>
-          axios.get(`${API_URL}/tasks?projectId=${p.id}`, { headers }).then((r) => r.data).catch(() => [])
-        );
-        const allTasks = (await Promise.all(taskPromises)).flat();
-        setTasks(allTasks);
-      }
+      const [projectsRes, tasksRes] = await Promise.all([
+        axios.get(`${API_URL}/projects?workspaceId=${workspaceId}`, { headers }),
+        axios.get(`${API_URL}/tasks?workspaceId=${workspaceId}`, { headers }),
+      ]);
+      setProjects(projectsRes.data || []);
+      setTasks(tasksRes.data || []);
     } catch {
       setTasks([]);
     } finally {
@@ -119,13 +115,19 @@ export default function TasksPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
+      <div className="flex h-screen bg-[#16161a]">
+        <Sidebar activeItem="tasks" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
+        </div>
       </div>
     );
   }
 
   return (
+    <div className="flex h-screen bg-[#16161a] overflow-hidden">
+      <Sidebar activeItem="tasks" />
+      <div className="flex-1 overflow-auto">
     <div className="p-6 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -298,6 +300,8 @@ export default function TasksPage() {
           onSaved={handleSaved}
         />
       )}
+    </div>
+      </div>
     </div>
   );
 }

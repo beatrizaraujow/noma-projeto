@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import { Plus, CheckSquare, Square, ChevronLeft, ChevronRight, X, BarChart2 } from 'lucide-react';
+import { Sidebar } from '@/components/layout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -168,6 +169,9 @@ export default function RoutinesPage() {
     : 0;
 
   return (
+    <div className="flex h-screen bg-[#16161a] overflow-hidden">
+      <Sidebar activeItem="routines" />
+      <div className="flex-1 overflow-auto">
     <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -352,6 +356,8 @@ export default function RoutinesPage() {
           </div>
         </div>
       )}
+    </div>
+      </div>
     </div>
   );
 }

@@ -446,6 +446,151 @@ export class TasksService {
     return { entries, totalHours };
   }
 
+  async findByWorkspace(workspaceId: string, userId: string) {
+    const member = await this.prisma.workspaceMember.findFirst({
+      where: { workspaceId, userId },
+    });
+    if (!member) throw new ForbiddenException('Not a workspace member');
+
+    return this.prisma.task.findMany({
+      where: { project: { workspaceId } },
+      select: {
+        id: true, title: true, description: true, status: true,
+        priority: true, dueDate: true, estimatedHours: true,
+        actualHours: true, projectId: true, position: true,
+        project: { select: { id: true, name: true } },
+        assignee: { select: { id: true, name: true, avatar: true } },
+      },
+      orderBy: [{ status: 'asc' }, { position: 'asc' }],
+    });
+  }
+
+  async getDeliveryStats(workspaceId: string, userId: string) {
+    const member = await this.prisma.workspaceMember.findFirst({
+      where: { workspaceId, userId },
+    });
+    if (!member) throw new ForbiddenException('Not a workspace member');
+
+    const projects = await this.prisma.project.findMany({
+      where: { workspaceId },
+      select: { id: true, name: true },
+    });
+    const projectIds = projects.map((p) => p.id);
+
+    if (projectIds.length === 0) {
+      return {
+        byGroup: { ATIVO: 0, FEITO: 0, FECHADO: 0 },
+        byStatus: {} as Record<string, number>,
+        byPriority: {} as Record<string, number>,
+        overdueCount: 0,
+        hoursThisMonth: 0,
+        byMember: [] as any[],
+        byProject: [] as any[],
+        weeklyThroughput: [] as any[],
+      };
+    }
+
+    const tasks = await this.prisma.task.findMany({
+      where: { projectId: { in: projectIds } },
+      select: {
+        id: true, status: true, priority: true, dueDate: true,
+        projectId: true, assigneeId: true, updatedAt: true,
+        assignee: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+
+    const ATIVO = new Set(['EM_PROGRESSO', 'ALTERAR']);
+    const FEITO = new Set(['APROVAR', 'REVISAO_IA', 'APROVACAO_LIDER', 'PUBLICAR', 'BANCO_CRIATIVOS', 'REVISAO_SOLICITADA']);
+    const FECHADO = new Set(['COMPLETO']);
+
+    const now = new Date();
+    const byGroup: Record<string, number> = { ATIVO: 0, FEITO: 0, FECHADO: 0 };
+    const byStatus: Record<string, number> = {};
+    const byPriority: Record<string, number> = {};
+    let overdueCount = 0;
+
+    const memberMap = new Map<string, { userId: string; name: string; avatar: string | null; active: number; feito: number; fechado: number; overdue: number }>();
+    const projectMap = new Map<string, { projectId: string; name: string; active: number; feito: number; fechado: number }>();
+    projects.forEach((p) => projectMap.set(p.id, { projectId: p.id, name: p.name, active: 0, feito: 0, fechado: 0 }));
+
+    for (const task of tasks) {
+      let group: 'ATIVO' | 'FEITO' | 'FECHADO' = 'ATIVO';
+      if (FEITO.has(task.status)) group = 'FEITO';
+      else if (FECHADO.has(task.status)) group = 'FECHADO';
+
+      byGroup[group]++;
+      byStatus[task.status] = (byStatus[task.status] ?? 0) + 1;
+      byPriority[task.priority] = (byPriority[task.priority] ?? 0) + 1;
+
+      const isOverdue = group === 'ATIVO' && task.dueDate && new Date(task.dueDate) < now;
+      if (isOverdue) overdueCount++;
+
+      if (task.assignee && task.assigneeId) {
+        if (!memberMap.has(task.assigneeId)) {
+          memberMap.set(task.assigneeId, { userId: task.assigneeId, name: task.assignee.name, avatar: task.assignee.avatar ?? null, active: 0, feito: 0, fechado: 0, overdue: 0 });
+        }
+        const m = memberMap.get(task.assigneeId)!;
+        if (group === 'ATIVO') { m.active++; if (isOverdue) m.overdue++; }
+        else if (group === 'FEITO') m.feito++;
+        else m.fechado++;
+      }
+
+      const proj = projectMap.get(task.projectId);
+      if (proj) {
+        if (group === 'ATIVO') proj.active++;
+        else if (group === 'FEITO') proj.feito++;
+        else proj.fechado++;
+      }
+    }
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const entries = await this.prisma.timeEntry.findMany({
+      where: { task: { projectId: { in: projectIds } }, date: { gte: startOfMonth } },
+      select: { hours: true, userId: true },
+    });
+    const hoursThisMonth = entries.reduce((sum, e) => sum + e.hours, 0);
+    const hoursByMember = new Map<string, number>();
+    entries.forEach((e) => hoursByMember.set(e.userId, (hoursByMember.get(e.userId) ?? 0) + e.hours));
+
+    const sixWeeksAgo = new Date(now);
+    sixWeeksAgo.setDate(now.getDate() - 42);
+    const weeklyMap = new Map<string, number>();
+    for (const task of tasks) {
+      if (FECHADO.has(task.status) && task.updatedAt > sixWeeksAgo) {
+        const key = this.getWeekKey(new Date(task.updatedAt));
+        weeklyMap.set(key, (weeklyMap.get(key) ?? 0) + 1);
+      }
+    }
+    const weeklyThroughput: { week: string; label: string; completed: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i * 7);
+      const key = this.getWeekKey(d);
+      const wkNum = key.split('-W')[1];
+      weeklyThroughput.push({ week: key, label: `S${wkNum}`, completed: weeklyMap.get(key) ?? 0 });
+    }
+
+    return {
+      byGroup,
+      byStatus,
+      byPriority,
+      overdueCount,
+      hoursThisMonth,
+      byMember: Array.from(memberMap.values()).map((m) => ({ ...m, hoursThisMonth: hoursByMember.get(m.userId) ?? 0 })).sort((a, b) => (b.fechado + b.feito) - (a.fechado + a.feito)),
+      byProject: Array.from(projectMap.values()).sort((a, b) => (b.active + b.feito + b.fechado) - (a.active + a.feito + a.fechado)),
+      weeklyThroughput,
+    };
+  }
+
+  private getWeekKey(date: Date): string {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+  }
+
   private async verifyProjectAccess(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
