@@ -490,76 +490,137 @@ export class TasksService {
       };
     }
 
-    const tasks = await this.prisma.task.findMany({
-      where: { projectId: { in: projectIds } },
-      select: {
-        id: true, status: true, priority: true, dueDate: true,
-        projectId: true, assigneeId: true, updatedAt: true,
-        assignee: { select: { id: true, name: true, avatar: true } },
-      },
-    });
-
-    const ATIVO = new Set(['EM_PROGRESSO', 'ALTERAR']);
-    const FEITO = new Set(['APROVAR', 'REVISAO_IA', 'APROVACAO_LIDER', 'PUBLICAR', 'BANCO_CRIATIVOS', 'REVISAO_SOLICITADA']);
-    const FECHADO = new Set(['COMPLETO']);
+    const ATIVO = ['EM_PROGRESSO', 'ALTERAR'];
+    const FEITO = ['APROVAR', 'REVISAO_IA', 'APROVACAO_LIDER', 'PUBLICAR', 'BANCO_CRIATIVOS', 'REVISAO_SOLICITADA'];
+    const FECHADO = ['COMPLETO'];
+    const groupOf = (status: string): 'ATIVO' | 'FEITO' | 'FECHADO' =>
+      FECHADO.includes(status) ? 'FECHADO' : FEITO.includes(status) ? 'FEITO' : 'ATIVO';
 
     const now = new Date();
-    const byGroup: Record<string, number> = { ATIVO: 0, FEITO: 0, FECHADO: 0 };
-    const byStatus: Record<string, number> = {};
-    const byPriority: Record<string, number> = {};
-    let overdueCount = 0;
-
-    const memberMap = new Map<string, { userId: string; name: string; avatar: string | null; active: number; feito: number; fechado: number; overdue: number }>();
-    const projectMap = new Map<string, { projectId: string; name: string; active: number; feito: number; fechado: number }>();
-    projects.forEach((p) => projectMap.set(p.id, { projectId: p.id, name: p.name, active: 0, feito: 0, fechado: 0 }));
-
-    for (const task of tasks) {
-      let group: 'ATIVO' | 'FEITO' | 'FECHADO' = 'ATIVO';
-      if (FEITO.has(task.status)) group = 'FEITO';
-      else if (FECHADO.has(task.status)) group = 'FECHADO';
-
-      byGroup[group]++;
-      byStatus[task.status] = (byStatus[task.status] ?? 0) + 1;
-      byPriority[task.priority] = (byPriority[task.priority] ?? 0) + 1;
-
-      const isOverdue = group === 'ATIVO' && task.dueDate && new Date(task.dueDate) < now;
-      if (isOverdue) overdueCount++;
-
-      if (task.assignee && task.assigneeId) {
-        if (!memberMap.has(task.assigneeId)) {
-          memberMap.set(task.assigneeId, { userId: task.assigneeId, name: task.assignee.name, avatar: task.assignee.avatar ?? null, active: 0, feito: 0, fechado: 0, overdue: 0 });
-        }
-        const m = memberMap.get(task.assigneeId)!;
-        if (group === 'ATIVO') { m.active++; if (isOverdue) m.overdue++; }
-        else if (group === 'FEITO') m.feito++;
-        else m.fechado++;
-      }
-
-      const proj = projectMap.get(task.projectId);
-      if (proj) {
-        if (group === 'ATIVO') proj.active++;
-        else if (group === 'FEITO') proj.feito++;
-        else proj.fechado++;
-      }
-    }
-
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const entries = await this.prisma.timeEntry.findMany({
-      where: { task: { projectId: { in: projectIds } }, date: { gte: startOfMonth } },
-      select: { hours: true, userId: true },
-    });
-    const hoursThisMonth = entries.reduce((sum, e) => sum + e.hours, 0);
-    const hoursByMember = new Map<string, number>();
-    entries.forEach((e) => hoursByMember.set(e.userId, (hoursByMember.get(e.userId) ?? 0) + e.hours));
-
     const sixWeeksAgo = new Date(now);
     sixWeeksAgo.setDate(now.getDate() - 42);
+    const where = { projectId: { in: projectIds } };
+
+    // Agrega no banco (em paralelo) em vez de carregar todas as tarefas em memória.
+    const [
+      byStatusRows,
+      byPriorityRows,
+      byProjectStatusRows,
+      byMemberStatusRows,
+      overdueRows,
+      hoursRows,
+      completedRecent,
+    ] = await Promise.all([
+      this.prisma.task.groupBy({ by: ['status'], where, _count: { _all: true } }),
+      this.prisma.task.groupBy({ by: ['priority'], where, _count: { _all: true } }),
+      this.prisma.task.groupBy({ by: ['projectId', 'status'], where, _count: { _all: true } }),
+      this.prisma.task.groupBy({
+        by: ['assigneeId', 'status'],
+        where: { ...where, assigneeId: { not: null } },
+        _count: { _all: true },
+      }),
+      this.prisma.task.groupBy({
+        by: ['assigneeId'],
+        where: { ...where, status: { in: ATIVO }, dueDate: { lt: now } },
+        _count: { _all: true },
+      }),
+      this.prisma.timeEntry.groupBy({
+        by: ['userId'],
+        where: { task: { projectId: { in: projectIds } }, date: { gte: startOfMonth } },
+        _sum: { hours: true },
+      }),
+      this.prisma.task.findMany({
+        where: { ...where, status: { in: FECHADO }, updatedAt: { gt: sixWeeksAgo } },
+        select: { updatedAt: true },
+      }),
+    ]);
+
+    // byStatus + byGroup
+    const byStatus: Record<string, number> = {};
+    const byGroup: Record<string, number> = { ATIVO: 0, FEITO: 0, FECHADO: 0 };
+    for (const r of byStatusRows) {
+      byStatus[r.status] = r._count._all;
+      byGroup[groupOf(r.status)] += r._count._all;
+    }
+
+    // byPriority
+    const byPriority: Record<string, number> = {};
+    for (const r of byPriorityRows) byPriority[r.priority] = r._count._all;
+
+    // byProject (inclui projetos com 0 tarefas)
+    const projectMap = new Map<string, { projectId: string; name: string; active: number; feito: number; fechado: number }>();
+    projects.forEach((p) => projectMap.set(p.id, { projectId: p.id, name: p.name, active: 0, feito: 0, fechado: 0 }));
+    for (const r of byProjectStatusRows) {
+      const proj = projectMap.get(r.projectId);
+      if (!proj) continue;
+      const g = groupOf(r.status);
+      if (g === 'ATIVO') proj.active += r._count._all;
+      else if (g === 'FEITO') proj.feito += r._count._all;
+      else proj.fechado += r._count._all;
+    }
+
+    // overdue (total + por membro)
+    let overdueCount = 0;
+    const overdueByMember = new Map<string, number>();
+    for (const r of overdueRows) {
+      overdueCount += r._count._all;
+      if (r.assigneeId) overdueByMember.set(r.assigneeId, r._count._all);
+    }
+
+    // horas do mês (total + por membro)
+    let hoursThisMonth = 0;
+    const hoursByMember = new Map<string, number>();
+    for (const r of hoursRows) {
+      const h = r._sum.hours ?? 0;
+      hoursThisMonth += h;
+      hoursByMember.set(r.userId, h);
+    }
+
+    // byMember: acumula por responsável
+    const memberMap = new Map<string, { userId: string; active: number; feito: number; fechado: number }>();
+    for (const r of byMemberStatusRows) {
+      const id = r.assigneeId;
+      if (!id) continue;
+      if (!memberMap.has(id)) memberMap.set(id, { userId: id, active: 0, feito: 0, fechado: 0 });
+      const m = memberMap.get(id)!;
+      const g = groupOf(r.status);
+      if (g === 'ATIVO') m.active += r._count._all;
+      else if (g === 'FEITO') m.feito += r._count._all;
+      else m.fechado += r._count._all;
+    }
+
+    // nome/avatar dos responsáveis (uma query só)
+    const memberIds = Array.from(memberMap.keys());
+    const users = memberIds.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: memberIds } },
+          select: { id: true, name: true, avatar: true },
+        })
+      : [];
+    const userById = new Map(users.map((u) => [u.id, u]));
+
+    const byMember = Array.from(memberMap.values())
+      .map((m) => ({
+        userId: m.userId,
+        name: userById.get(m.userId)?.name ?? '',
+        avatar: userById.get(m.userId)?.avatar ?? null,
+        active: m.active,
+        feito: m.feito,
+        fechado: m.fechado,
+        overdue: overdueByMember.get(m.userId) ?? 0,
+        hoursThisMonth: hoursByMember.get(m.userId) ?? 0,
+      }))
+      .sort((a, b) => (b.fechado + b.feito) - (a.fechado + a.feito));
+
+    const byProject = Array.from(projectMap.values())
+      .sort((a, b) => (b.active + b.feito + b.fechado) - (a.active + a.feito + a.fechado));
+
+    // weeklyThroughput: só tarefas concluídas nas últimas 6 semanas
     const weeklyMap = new Map<string, number>();
-    for (const task of tasks) {
-      if (FECHADO.has(task.status) && task.updatedAt > sixWeeksAgo) {
-        const key = this.getWeekKey(new Date(task.updatedAt));
-        weeklyMap.set(key, (weeklyMap.get(key) ?? 0) + 1);
-      }
+    for (const t of completedRecent) {
+      const key = this.getWeekKey(new Date(t.updatedAt));
+      weeklyMap.set(key, (weeklyMap.get(key) ?? 0) + 1);
     }
     const weeklyThroughput: { week: string; label: string; completed: number }[] = [];
     for (let i = 5; i >= 0; i--) {
@@ -576,8 +637,8 @@ export class TasksService {
       byPriority,
       overdueCount,
       hoursThisMonth,
-      byMember: Array.from(memberMap.values()).map((m) => ({ ...m, hoursThisMonth: hoursByMember.get(m.userId) ?? 0 })).sort((a, b) => (b.fechado + b.feito) - (a.fechado + a.feito)),
-      byProject: Array.from(projectMap.values()).sort((a, b) => (b.active + b.feito + b.fechado) - (a.active + a.feito + a.fechado)),
+      byMember,
+      byProject,
       weeklyThroughput,
     };
   }
