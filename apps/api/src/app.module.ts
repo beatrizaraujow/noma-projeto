@@ -40,7 +40,23 @@ import { RoutinesModule } from './modules/routines/routines.module';
     //   context: ({ req, res }) => ({ req, res }),
     // }),
     ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60000, limit: 10 }],
+      throttlers: [
+        // Por IP do cliente (usa o getTracker padrão abaixo).
+        { name: 'default', ttl: 60000, limit: 10 },
+        // Por CONTA (email do body): protege um usuário específico de
+        // brute-force distribuído (muitos IPs martelando a mesma conta).
+        // Chaveado pelo email; pulado quando não há email (ex.: login Google).
+        {
+          name: 'account',
+          ttl: 900000, // 15 min
+          limit: 10,
+          getTracker: (req) => {
+            const email = req?.body?.email;
+            return email ? `account:${String(email).toLowerCase().trim()}` : 'account:anon';
+          },
+          skipIf: (ctx) => !ctx.switchToHttp().getRequest()?.body?.email,
+        },
+      ],
       // Atrás do proxy do Railway, req.ip cai num IP de borda que ROTACIONA,
       // fazendo o rate limiting nunca atingir o limite por cliente. Aqui keamos
       // pelo IP publico mais a DIREITA do X-Forwarded-For: e o IP que a borda do
