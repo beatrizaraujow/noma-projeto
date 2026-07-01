@@ -11,7 +11,7 @@ import type { SignupOrigin } from '../users/users.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: 5, ttl: 60000 }, account: { limit: 10, ttl: 900000 } })
   @UseGuards(ThrottlerGuard, LocalAuthGuard)
   @Post('login')
   @ApiOperation({ summary: 'User login' })
@@ -27,7 +27,7 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle({ default: { limit: 3, ttl: 60000 }, account: { limit: 10, ttl: 900000 } })
   @UseGuards(ThrottlerGuard)
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
