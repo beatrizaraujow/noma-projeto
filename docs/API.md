@@ -415,41 +415,6 @@ http://localhost:3001/api/docs
 
 ---
 
-## GraphQL API
+## GraphQL
 
-GraphQL endpoint available at:
-
-```
-http://localhost:3001/graphql
-```
-
-GraphQL Playground:
-```
-http://localhost:3001/graphql
-```
-
-### Example Query
-
-```graphql
-query {
-  users {
-    id
-    name
-    email
-  }
-}
-```
-
-### Example Mutation
-
-```graphql
-mutation {
-  createTask(input: {
-    title: "New Task"
-    projectId: "project123"
-  }) {
-    id
-    title
-  }
-}
-```
+> **Não disponível.** A API é **REST**. O pacote GraphQL/Apollo consta nas dependências, mas o `GraphQLModule` está **comentado** em `app.module.ts` — não existe endpoint `/graphql`. Use os endpoints REST acima (documentados no Swagger em `/api/docs`).
