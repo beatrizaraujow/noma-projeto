@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UseGuards, Request, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -10,7 +11,8 @@ import type { SignupOrigin } from '../users/users.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @UseGuards(LocalAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(ThrottlerGuard, LocalAuthGuard)
   @Post('login')
   @ApiOperation({ summary: 'User login' })
   @ApiBody({
@@ -25,6 +27,8 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @UseGuards(ThrottlerGuard)
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
   @ApiBody({
@@ -45,6 +49,8 @@ export class AuthController {
     return this.authService.register(email, password, name, origin);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @UseGuards(ThrottlerGuard)
   @Post('google')
   @ApiOperation({ summary: 'Login/register via Google id_token' })
   async googleLogin(
