@@ -405,23 +405,26 @@ const shouldNotify = (type: Notification['type'], preferences: NotificationPrefe
 
 ### REST API Endpoints
 
+> ⚠️ **Notificações NÃO têm endpoints REST.** Não existe model `Notification` no Prisma nem controller `/api/notifications*`. As notificações são entregues **apenas em tempo real via WebSocket e mantidas em memória** (ver "WebSocket Real-time Notifications" acima e o doc `REALTIME.md`) — não há persistência nem histórico via REST. Os endpoints abaixo são **planejados / não implementados**:
+>
+> ```
+> (PLANEJADO, não existe) GET    /api/notifications
+> (PLANEJADO, não existe) POST   /api/notifications/:id/read
+> (PLANEJADO, não existe) POST   /api/notifications/read-all
+> (PLANEJADO, não existe) DELETE /api/notifications
+> ```
+
+**Activities (REST — estes existem):**
+
 ```typescript
-// GET /api/notifications
-// Returns: { notifications: Notification[], unreadCount: number }
+// GET /api/activities/task/:taskId
+// Retorna as atividades de uma tarefa (array de Activity)
 
-// POST /api/notifications/:id/read
-// Marks notification as read
-
-// POST /api/notifications/read-all
-// Marks all as read
-
-// DELETE /api/notifications
-// Clears all notifications
-
-// GET /api/activities
-// Query params: taskId?, userId?, type?, limit?, offset?
-// Returns: { activities: Activity[], total: number }
+// GET /api/activities/project/:projectId
+// Retorna as atividades de um projeto (array de Activity)
 ```
+
+> Rotas reais em `apps/api/src/modules/activities/activities.controller.ts` (protegidas por `JwtAuthGuard`). Não há query params `taskId/userId/type` nem envelope `{ activities, total }` — o filtro é pelo path param e a resposta é a lista de atividades.
 
 ### Creating Notifications
 

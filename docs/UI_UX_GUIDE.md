@@ -162,10 +162,10 @@ Adicionadas ao `tailwind.config.js`:
 
 #### **Skeleton Loaders**
 
-**Arquivo:** [`apps/web/src/components/ui/skeleton.tsx`](../apps/web/src/components/ui/skeleton.tsx)
+**Arquivo:** [`apps/web/src/components/common/skeleton.tsx`](../apps/web/src/components/common/skeleton.tsx)
 
 ```tsx
-import { Skeleton, CardSkeleton, TableSkeleton, ListSkeleton } from '@/components/ui/skeleton';
+import { Skeleton, CardSkeleton, TableSkeleton, ListSkeleton } from '@/components/common/skeleton';
 
 // Skeleton básico
 <Skeleton className="h-4 w-full" />
@@ -195,10 +195,10 @@ import { Skeleton, CardSkeleton, TableSkeleton, ListSkeleton } from '@/component
 
 #### **Spinners**
 
-**Arquivo:** [`apps/web/src/components/ui/spinner.tsx`](../apps/web/src/components/ui/spinner.tsx)
+**Arquivo:** [`apps/web/src/components/common/spinner.tsx`](../apps/web/src/components/common/spinner.tsx)
 
 ```tsx
-import { Spinner, SpinnerWithText, FullPageSpinner, ButtonSpinner } from '@/components/ui/spinner';
+import { Spinner, SpinnerWithText, FullPageSpinner, ButtonSpinner } from '@/components/common/spinner';
 
 // Spinner básico
 <Spinner size="md" variant="primary" />
@@ -221,10 +221,10 @@ import { Spinner, SpinnerWithText, FullPageSpinner, ButtonSpinner } from '@/comp
 
 #### **Progress Bars**
 
-**Arquivo:** [`apps/web/src/components/ui/progress.tsx`](../apps/web/src/components/ui/progress.tsx)
+**Arquivo:** [`apps/web/src/components/common/progress.tsx`](../apps/web/src/components/common/progress.tsx)
 
 ```tsx
-import { Progress, CircularProgress } from '@/components/ui/progress';
+import { Progress, CircularProgress } from '@/components/common/progress';
 
 // Barra de progresso linear
 <Progress value={75} showLabel />
@@ -239,10 +239,10 @@ import { Progress, CircularProgress } from '@/components/ui/progress';
 
 #### **Toast Notifications**
 
-**Arquivo:** [`apps/web/src/components/ui/toast.tsx`](../apps/web/src/components/ui/toast.tsx)
+**Arquivo:** [`apps/web/src/components/common/toast.tsx`](../apps/web/src/components/common/toast.tsx)
 
 ```tsx
-import { useToast, useSuccessToast, useErrorToast } from '@/components/ui/toast';
+import { useToast, useSuccessToast, useErrorToast } from '@/components/common/toast';
 
 function MyComponent() {
   const { showToast } = useToast();
@@ -274,10 +274,10 @@ function MyComponent() {
 
 #### **Error Boundary**
 
-**Arquivo:** [`apps/web/src/components/ui/error-boundary.tsx`](../apps/web/src/components/ui/error-boundary.tsx)
+**Arquivo:** [`apps/web/src/components/common/error-boundary.tsx`](../apps/web/src/components/common/error-boundary.tsx)
 
 ```tsx
-import { ErrorBoundary, ErrorState, EmptyState } from '@/components/ui/error-boundary';
+import { ErrorBoundary, ErrorState, EmptyState } from '@/components/common/error-boundary';
 
 // Wrapper com error boundary
 <ErrorBoundary
@@ -313,12 +313,12 @@ import { ErrorBoundary, ErrorState, EmptyState } from '@/components/ui/error-bou
 
 ### 5. 👋 Onboarding Flow
 
-**Arquivo:** [`apps/web/src/components/onboarding/OnboardingFlow.tsx`](../apps/web/src/components/onboarding/OnboardingFlow.tsx)
+**Arquivo:** [`apps/web/src/components/features/onboarding/OnboardingFlow.tsx`](../apps/web/src/components/features/onboarding/OnboardingFlow.tsx)
 
 #### **Welcome Modal**
 
 ```tsx
-import { WelcomeModal } from '@/components/onboarding/OnboardingFlow';
+import { WelcomeModal } from '@/components/features/onboarding/OnboardingFlow';
 
 <WelcomeModal
   isOpen={showWelcome}
@@ -330,7 +330,7 @@ import { WelcomeModal } from '@/components/onboarding/OnboardingFlow';
 #### **Tour Guiado**
 
 ```tsx
-import { useOnboarding, defaultOnboardingSteps } from '@/components/onboarding/OnboardingFlow';
+import { useOnboarding, defaultOnboardingSteps } from '@/components/features/onboarding/OnboardingFlow';
 
 function App() {
   const { startOnboarding } = useOnboarding();
@@ -365,10 +365,10 @@ function App() {
 
 ### Badge
 
-**Arquivo:** [`apps/web/src/components/ui/badge.tsx`](../apps/web/src/components/ui/badge.tsx)
+**Arquivo:** [`apps/web/src/components/common/badge.tsx`](../apps/web/src/components/common/badge.tsx)
 
 ```tsx
-import { Badge, StatusBadge, PriorityBadge, CountBadge } from '@/components/ui/badge';
+import { Badge, StatusBadge, PriorityBadge, CountBadge } from '@/components/common/badge';
 
 // Badge genérico
 <Badge variant="success" size="md">Ativo</Badge>
@@ -388,10 +388,10 @@ import { Badge, StatusBadge, PriorityBadge, CountBadge } from '@/components/ui/b
 
 ### Avatar
 
-**Arquivo:** [`apps/web/src/components/ui/avatar.tsx`](../apps/web/src/components/ui/avatar.tsx)
+**Arquivo:** [`apps/web/src/components/common/avatar.tsx`](../apps/web/src/components/common/avatar.tsx)
 
 ```tsx
-import { Avatar, AvatarGroup } from '@/components/ui/avatar';
+import { Avatar, AvatarGroup } from '@/components/common/avatar';
 
 // Avatar único
 <Avatar
@@ -429,7 +429,7 @@ Os providers já estão configurados em [`apps/web/src/app/providers.tsx`](../ap
 ```tsx
 'use client';
 
-import { useSuccessToast, useErrorToast } from '@/components/ui/toast';
+import { useSuccessToast, useErrorToast } from '@/components/common/toast';
 
 export function TaskForm() {
   const showSuccess = useSuccessToast();
@@ -450,8 +450,8 @@ export function TaskForm() {
 
 ```tsx
 import { useTasks } from '@/hooks/useQueries';
-import { CardSkeleton } from '@/components/ui/skeleton';
-import { ErrorState, EmptyState } from '@/components/ui/error-boundary';
+import { CardSkeleton } from '@/components/common/skeleton';
+import { ErrorState, EmptyState } from '@/components/common/error-boundary';
 
 function TaskList({ projectId }) {
   const { data: tasks, isLoading, error, refetch } = useTasks(projectId);
@@ -491,7 +491,7 @@ function TaskList({ projectId }) {
 ### 4. Error Boundary
 
 ```tsx
-import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { ErrorBoundary } from '@/components/common/error-boundary';
 
 function Page() {
   return (
@@ -508,7 +508,7 @@ function Page() {
 'use client';
 
 import { useEffect, useState } from 'react';
-import { WelcomeModal, useOnboarding, defaultOnboardingSteps } from '@/components/onboarding/OnboardingFlow';
+import { WelcomeModal, useOnboarding, defaultOnboardingSteps } from '@/components/features/onboarding/OnboardingFlow';
 
 export default function Dashboard() {
   const [showWelcome, setShowWelcome] = useState(false);
@@ -577,7 +577,7 @@ apps/web/src/
 │   ├── design-system.ts       ✨ Design tokens e variantes
 │   └── animations.ts          ✨ Configurações de animação
 ├── components/
-│   ├── ui/
+│   ├── common/
 │   │   ├── skeleton.tsx       ✨ Loading skeletons
 │   │   ├── spinner.tsx        ✨ Loading spinners
 │   │   ├── progress.tsx       ✨ Progress bars
@@ -585,8 +585,9 @@ apps/web/src/
 │   │   ├── error-boundary.tsx ✨ Error handling
 │   │   ├── badge.tsx          ✨ Status/priority badges
 │   │   └── avatar.tsx         ✨ User avatars
-│   └── onboarding/
-│       └── OnboardingFlow.tsx ✨ Onboarding system
+│   └── features/
+│       └── onboarding/
+│           └── OnboardingFlow.tsx ✨ Onboarding system
 └── app/
     └── providers.tsx          ✅ Updated with new providers
 ```

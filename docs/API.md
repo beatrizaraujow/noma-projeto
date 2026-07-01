@@ -398,10 +398,13 @@ All errors follow this format:
 
 ## Rate Limiting
 
-- **Rate:** 10 requests per minute per IP
-- **Header:** `X-RateLimit-Remaining`
+O rate limiting é aplicado **somente nas rotas de autenticação** — não há throttling global nem header `X-RateLimit-*` customizado:
 
-Exceeded rate limit returns `429 Too Many Requests`
+- `POST /api/auth/login` — 5 requisições/min
+- `POST /api/auth/register` — 3 requisições/min
+- `POST /api/auth/google` — 10 requisições/min
+
+As demais rotas da API **não têm throttling**. Ao exceder os limites acima, a resposta é `429 Too Many Requests`.
 
 ---
 

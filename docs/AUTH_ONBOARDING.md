@@ -12,7 +12,7 @@
 - Link para signup
 - Estados de loading e erro
 
-**Rota**: `/auth/login`
+**Rota**: `/login`
 
 **Features**:
 - Email/password validation
@@ -29,7 +29,7 @@
 - Links para Terms e Privacy Policy
 - Link para login
 
-**Rota**: `/auth/signup`
+**Rota**: `/signup`
 
 **Features**:
 - Full name, email, password fields
@@ -45,7 +45,7 @@
 - Back to login button
 - Background gradiente
 
-**Rota**: `/auth/forgot-password`
+**Rota**: `/forgot-password`
 
 **Features**:
 - Email validation

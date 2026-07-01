@@ -316,7 +316,7 @@ To test the dashboard:
 - All endpoints require JWT authentication
 - Workspace membership verified before data access
 - No sensitive user data exposed
-- Rate limiting applied via NestJS throttler
+- Sem rate limiting nas rotas de analytics (o throttling só é aplicado nas rotas `/api/auth/*`)
 
 ## File Structure
 

@@ -46,10 +46,10 @@ Triggers via webhooks externos para integração com serviços third-party.
 - Tracking de uso (contagem e último trigger)
 - Suporte a payload JSON
 
-### 5. **Scheduled Automations** ✅
-Automações agendadas usando expressões cron.
+### 5. **Scheduled Automations** ⚠️ NÃO ativo
+Automações agendadas usando expressões cron — **não funcionam hoje**. O método `@Cron processScheduledWorkflows` está **comentado** em `workflow.service.ts` e o `@nestjs/schedule`/`ScheduleModule` **não está instalado nem registrado** em `app.module.ts`. Você pode salvar um workflow com trigger `scheduled`, mas ele **nunca será disparado automaticamente** — só via execução manual (`POST /workflows/:id/execute`). Para ativar, siga os passos em "Configuração".
 
-**Suporte a:**
+**Suporte pretendido (após ativação manual):**
 - Cron expressions (minuto, hora, dia, mês, dia da semana)
 - Presets comuns (diário, semanal, mensal)
 - Timezones configuráveis
@@ -603,6 +603,6 @@ curl -X POST https://api.example.com/workflows/webhooks/webhook_abc123/trigger \
 
 ---
 
-**Status**: ✅ Implementação completa e funcional
+**Status**: ⚠️ Workflows/webhooks/execução manual funcionam; **agendamento (Scheduled) NÃO está ativo** (`@Cron processScheduledWorkflows` comentado e `@nestjs/schedule`/`ScheduleModule` não instalado/registrado). Ver seção "Configuração" para ativar.
 
 **Documentação atualizada**: 02/02/2026

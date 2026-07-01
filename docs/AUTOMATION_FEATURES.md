@@ -129,8 +129,8 @@ POST /automation/templates/{templateId}/apply
 
 ---
 
-### ✅ 3. Recurring Tasks
-Automatically create tasks on a schedule (daily, weekly, monthly, yearly).
+### ⚠️ 3. Recurring Tasks (agendamento NÃO implementado)
+Cadastra a configuração de tarefas recorrentes via API REST. **O disparo automático por cron NÃO está implementado**: `processRecurringTasks` é um stub e a dependência `@nestjs/schedule` **não está instalada/registrada** — nenhuma tarefa é criada automaticamente no horário. Na prática, a criação é manual (via os endpoints REST abaixo); o agendamento diário (daily, weekly, monthly, yearly) descrito a seguir é o comportamento **pretendido**, não o ativo.
 
 **Component**: `RecurringTasks.tsx`
 
@@ -164,7 +164,7 @@ Automatically create tasks on a schedule (daily, weekly, monthly, yearly).
 - Task template with priority, status, assignee
 - Enable/disable without deleting
 - Interval support (e.g., every 2 weeks, every 3 months)
-- Runs via cron job (daily at midnight)
+- ⚠️ Cron job (daily at midnight) **NÃO implementado** — `processRecurringTasks` é stub e `@nestjs/schedule` não está instalado; a criação é manual via API REST
 
 **Example Use Cases**:
 - Weekly team standups
@@ -294,16 +294,12 @@ apps/api/src/modules/automation/
 - `AutomationService` - Core automation logic
 - `executeTrigger()` - Process trigger events
 - `applyProjectTemplate()` - Create tasks from template
-- `processRecurringTasks()` - Cron job for recurring tasks
+- `processRecurringTasks()` - **stub** (agendamento por cron NÃO implementado)
 - `executeBulkAction()` - Batch task operations
 - `applyAutoAssignRules()` - Auto-assignment logic
 
 ### Dependencies
-```json
-{
-  "@nestjs/schedule": "^4.0.0" // For cron jobs
-}
-```
+> ⚠️ `@nestjs/schedule` **NÃO está instalado** no projeto. Sem ele (e sem `ScheduleModule.forRoot()`), não há cron/agendamento — as tarefas recorrentes só existem como configuração, não são disparadas automaticamente.
 
 ---
 

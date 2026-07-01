@@ -60,7 +60,7 @@ const display = formatShortcut({ key: 'k', meta: true });
 ### 2. Shortcuts Overlay
 
 ```tsx
-import { ShortcutsOverlay } from '@/components/a11y';
+import { ShortcutsOverlay } from '@/components/common/a11y';
 
 const shortcuts = [
   {
@@ -83,7 +83,7 @@ const shortcuts = [
 ### 3. Screen Reader Support
 
 ```tsx
-import { VisuallyHidden, LiveRegion, Alert, Status } from '@/components/a11y';
+import { VisuallyHidden, LiveRegion, Alert, Status } from '@/components/common/a11y';
 import { announceToScreenReader } from '@/utils/a11y';
 
 // Hidden label for screen readers
@@ -109,7 +109,7 @@ announceToScreenReader('Task completed!', 'polite');
 
 ```tsx
 import { useFocusTrap } from '@/hooks/useFocusTrap';
-import { useFocusVisible } from '@/components/a11y/FocusVisible';
+import { useFocusVisible } from '@/components/common/a11y/FocusVisible';
 
 // Focus trap for modals
 function Modal({ isOpen }) {
@@ -216,7 +216,7 @@ Hides content visually but keeps it accessible to screen readers.
 Skip navigation links for keyboard users.
 
 ```tsx
-import { SkipLinks, SkipLink } from '@/components/a11y';
+import { SkipLinks, SkipLink } from '@/components/common/a11y';
 
 <SkipLinks>
   <SkipLink href="#main-content">Skip to main content</SkipLink>
@@ -242,7 +242,7 @@ import { SkipLinks, SkipLink } from '@/components/a11y';
 Announces dynamic content changes to screen readers.
 
 ```tsx
-import { LiveRegion, Alert, Status } from '@/components/a11y';
+import { LiveRegion, Alert, Status } from '@/components/common/a11y';
 
 // Critical alerts (interrupts)
 <Alert>
@@ -273,7 +273,7 @@ import { LiveRegion, Alert, Status } from '@/components/a11y';
 Detect when focus should be visible (keyboard navigation).
 
 ```tsx
-import { useFocusVisible } from '@/components/a11y/FocusVisible';
+import { useFocusVisible } from '@/components/common/a11y/FocusVisible';
 
 function CustomButton() {
   const { isFocusVisible, focusProps } = useFocusVisible();
@@ -663,7 +663,7 @@ console.log(ratio); // 21
 Minimum 44×44px tap targets for mobile:
 
 ```tsx
-import { TouchButton } from '@/components/mobile';
+import { TouchButton } from '@/components/layout/mobile';
 
 <TouchButton>
   {/* Automatically ensures 44x44px minimum */}
@@ -722,7 +722,7 @@ import {
   VisuallyHidden,
   Alert,
   useFocusVisible,
-} from '@/components/a11y';
+} from '@/components/common/a11y';
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useReducedMotion } from '@/hooks/useReducedMotion';

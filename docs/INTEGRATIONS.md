@@ -91,20 +91,8 @@ Sistema completo de integrações para conectar o NOMA com ferramentas externas,
 }
 ```
 
-### 5. **Outlook Calendar Sync**
-- ✅ Sincronização via Microsoft Graph API
-- ✅ OAuth 2.0 authentication
-- ✅ Suporte para eventos recorrentes
-- ⏳ Notificações de eventos
-
-**Configuração:**
-```json
-{
-  "clientId": "YOUR_CLIENT_ID",
-  "clientSecret": "YOUR_CLIENT_SECRET",
-  "refreshToken": "YOUR_REFRESH_TOKEN"
-}
-```
+### 5. **Outlook Calendar Sync** ⚠️ NÃO implementado
+> Não existe serviço de Outlook/Microsoft Graph no código. A **única** integração de calendário implementada é o **Google Calendar** (`calendar.service.ts`). Esta seção descreve algo **planejado**, não disponível.
 
 ## 🏗️ Arquitetura
 
@@ -230,20 +218,20 @@ await calendarService.syncEvents(config, 'google_calendar', workspaceId);
 
 ## 🔐 Segurança
 
+> ⚠️ **Sem criptografia em repouso.** O campo `Integration.config` é um `Json` puro no schema Prisma — URLs de webhook, tokens OAuth e credenciais de email são armazenados **em texto claro no banco**, sem criptografia nem hash. As afirmações abaixo descrevem boas práticas **recomendadas / não implementadas**, não o comportamento atual.
+
 ### Webhook URLs
-- Todas as URLs de webhook são armazenadas criptografadas
-- Validação de origem para webhooks recebidos
-- Rate limiting aplicado
+- Validação de assinatura HMAC para webhooks recebidos (quando configurado)
+- ⚠️ URLs armazenadas em texto claro (`config` JSON) — criptografia em repouso NÃO implementada
 
 ### OAuth Tokens
-- Tokens armazenados com hash
-- Refresh tokens para renovação automática
+- Refresh tokens para renovação automática (quando o provider suporta)
 - Scopes mínimos necessários
+- ⚠️ Tokens armazenados em texto claro (`config` JSON) — hash/criptografia NÃO implementados
 
 ### Email Credentials
-- Senhas nunca expostas na API
 - Suporte para App Passwords
-- Criptografia em repouso
+- ⚠️ Credenciais armazenadas em texto claro (`config` JSON) — criptografia em repouso NÃO implementada
 
 ## 📊 Logs e Monitoramento
 
@@ -296,24 +284,11 @@ async createTask(data) {
 
 ```bash
 cd packages/database
-npx prisma migrate dev --name add_integrations
+prisma db push
 npx prisma generate
 ```
 
-### 2. Adicionar ao app.module.ts
-
-```typescript
-import { IntegrationsModule } from './modules/integrations/integrations.module';
-
-@Module({
-  imports: [
-    // ... outros módulos
-    IntegrationsModule,
-  ],
-})
-```
-
-### 3. Variáveis de Ambiente (Opcional)
+### 2. Variáveis de Ambiente (Opcional)
 
 ```env
 # Slack
@@ -331,10 +306,6 @@ EMAIL_PASSWORD=app-password
 # Google Calendar
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
-
-# Outlook
-OUTLOOK_CLIENT_ID=your-client-id
-OUTLOOK_CLIENT_SECRET=your-client-secret
 ```
 
 ## 📝 Próximos Passos

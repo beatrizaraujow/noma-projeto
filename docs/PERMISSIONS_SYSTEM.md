@@ -1,13 +1,15 @@
 # Sistema de Permissões e Controle de Acesso - NUMA
 
+> ⚠️ **AVISO: este sistema NÃO está ativo em produção.** O `PermissionsModule` **não está registrado** em `apps/api/src/app.module.ts` — todo o código (RolesService, `PermissionsGuard`, `@RequirePermission`, guest-access, audit-log) está **disponível no código, porém não montado**. Consequentemente as rotas `/api/permissions/*` **não sobem** e o RBAC granular é código morto no app em execução. Para usá-lo é preciso primeiro adicionar `PermissionsModule` aos `imports` do `app.module.ts` (ver "Próximos Passos"). O restante deste doc descreve o comportamento pretendido do código, não o que está ativo hoje.
+
 ## 📋 Visão Geral
 
-Sistema completo de gerenciamento de permissões com:
-- ✅ Custom roles (papéis personalizados)
-- ✅ Permissões por projeto
-- ✅ Permissões granulares (view/edit/delete/manage)
-- ✅ Guest access (acesso temporário)
-- ✅ Audit logs (rastreamento completo)
+Sistema de gerenciamento de permissões (disponível no código, porém não montado) com:
+- Custom roles (papéis personalizados)
+- Permissões por projeto
+- Permissões granulares (view/edit/delete/manage)
+- Guest access (acesso temporário)
+- Audit logs (rastreamento completo)
 
 ## 🗄️ Schema do Banco de Dados
 
@@ -84,11 +86,11 @@ model AuditLog {
 
 ## 🔧 Setup
 
-### 1. Executar Migration
+### 1. Sincronizar Schema
 
 ```bash
 cd packages/database
-npx prisma migrate dev --name add_permissions_system
+prisma db push
 npx prisma generate
 ```
 
