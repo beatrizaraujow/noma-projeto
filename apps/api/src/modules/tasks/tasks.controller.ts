@@ -46,8 +46,15 @@ export class TasksController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all tasks for a project' })
-  findAll(@Query('projectId') projectId: string, @Request() req) {
+  @ApiOperation({ summary: 'Get tasks by projectId or workspaceId' })
+  findAll(
+    @Query('projectId') projectId: string,
+    @Query('workspaceId') workspaceId: string,
+    @Request() req,
+  ) {
+    if (workspaceId) {
+      return this.tasksService.findByWorkspace(workspaceId, req.user.userId);
+    }
     return this.tasksService.findAll(projectId, req.user.userId);
   }
 
@@ -55,6 +62,24 @@ export class TasksController {
   @ApiOperation({ summary: 'Get tasks with advanced filters' })
   findWithFilters(@Body() filters: TaskFilterDto, @Request() req) {
     return this.tasksService.findWithFilters(filters, req.user.userId);
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Delivery stats for a workspace' })
+  getDeliveryStats(@Query('workspaceId') workspaceId: string, @Request() req) {
+    return this.tasksService.getDeliveryStats(workspaceId, req.user.userId);
+  }
+
+  @Get('time-report')
+  @ApiOperation({ summary: 'Time report by project/user/period' })
+  getTimeReport(
+    @Query('projectId') projectId: string,
+    @Query('userId') userId: string,
+    @Query('start') start: string,
+    @Query('end') end: string,
+    @Request() req,
+  ) {
+    return this.tasksService.getTimeReport({ projectId, userId, start, end }, req.user.userId);
   }
 
   @Get(':id')
@@ -106,18 +131,6 @@ export class TasksController {
   @ApiOperation({ summary: 'List time entries for a task' })
   getTimeEntries(@Param('id') id: string, @Request() req) {
     return this.tasksService.getTimeEntries(id, req.user.userId);
-  }
-
-  @Get('time-report')
-  @ApiOperation({ summary: 'Time report by project/user/period' })
-  getTimeReport(
-    @Query('projectId') projectId: string,
-    @Query('userId') userId: string,
-    @Query('start') start: string,
-    @Query('end') end: string,
-    @Request() req,
-  ) {
-    return this.tasksService.getTimeReport({ projectId, userId, start, end }, req.user.userId);
   }
 
   @Put('positions/bulk')
