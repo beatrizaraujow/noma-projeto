@@ -64,10 +64,6 @@ docs(readme): update installation instructions
 
 Veja o [README.md](README.md) para instruções de setup do ambiente de desenvolvimento.
 
-## Código de Conduta
-
-Por favor, leia nosso [Code of Conduct](CODE_OF_CONDUCT.md) antes de contribuir.
-
 ## Licença
 
 Ao contribuir, você concorda que suas contribuições serão licenciadas sob a mesma licença do projeto (MIT).

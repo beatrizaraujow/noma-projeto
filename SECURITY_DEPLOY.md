@@ -112,9 +112,9 @@ Before deploying or sharing this repository:
 
 ## 📚 Related Documentation
 
-- [Deploy Study Guide](DEPLOY_STUDY.md)
-- [Quick Deploy](README_DEPLOY.md)
-- [Security Best Practices](https://owasp.org/www-project-top-ten/)
+- [Deploy Checklist](docs/DEPLOY_CHECKLIST.md)
+- [Security Policy](SECURITY.md)
+- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)
 
 ---
 
