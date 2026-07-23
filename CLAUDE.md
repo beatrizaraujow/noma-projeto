@@ -87,8 +87,8 @@ Ao mexer em auth, os dois lados precisam estar coerentes.
 ### Pegadinhas conhecidas (verificadas no código)
 
 - **`PermissionsModule` NÃO está registrado** em `app.module.ts`. A pasta `src/modules/permissions/` (RolesService, `PermissionsGuard`, decorator `@RequirePermission`, guest-access, audit-log) existe e compila, mas **não está montada** — as rotas `/permissions/*` não sobem e o sistema de permissões granulares é código morto no app em execução. Para usá-lo é preciso adicioná-lo aos `imports` primeiro.
-- **Prefixo duplicado**: `comments`, `activities` e `attachments` declaram `@Controller('api/comments'|'api/activities'|'api/attachments')`. Como já existe o prefixo global `api`, o caminho real fica **`/api/api/comments`**, `/api/api/activities`, `/api/api/attachments`. Os demais controllers omitem o `api/` corretamente.
-- **Rate limiting inerte**: `ThrottlerModule.forRoot` está configurado, mas **nenhum `ThrottlerGuard`** é aplicado (global ou por rota) — não há throttling efetivo.
+- **Prefixo dos controllers**: `comments`, `activities` e `attachments` usam `@Controller('comments'|'activities'|'attachments')` (sem `api/`), gerando o caminho correto `/api/<recurso>`. Não redeclare `@Controller('api/...')` — o prefixo global duplicaria para `/api/api/...`. (Isso já foi um bug, corrigido no PR #6.)
+- **Rate limiting ativo só em `/api/auth/*`**: `ThrottlerModule.forRoot` tem dois throttlers nomeados (`default` por IP, com resolução robusta do IP real via `X-Forwarded-For`; `account` por email do body) e o `ThrottlerGuard` é aplicado por rota em `auth.controller` (login 5/min, register 3/min, google 10/min). **Não há guard global** — as demais rotas não têm throttling. (Ver `docs/BACKEND_CONTEXT.md`.)
 - **`ValidationPipe` global usa `forbidNonWhitelisted: true`**: propriedades extras no body são rejeitadas. Vários controllers de auth/tasks recebem body inline sem DTO (via `@Body('campo')`), então cuidado ao adicionar campos.
 - **`PrismaService` tolera DB offline**: falha de conexão no init apenas gera warning e o app continua — erros de query só aparecem em runtime.
 
