@@ -1,5 +1,5 @@
 import { Controller, Post, Body, UseGuards, Request, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -11,7 +11,13 @@ import type { SignupOrigin } from '../users/users.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 60000 }, account: { limit: 10, ttl: 900000 } })
+  // O login chega SEMPRE pelo IP de saida (compartilhado) da Vercel, porque o
+  // authorize() do NextAuth roda server-side. Rate limit por IP aqui estrangula
+  // TODOS os usuarios juntos (o IP e o mesmo para todos). Por isso pulamos o
+  // throttler por IP ('default') e mantemos apenas o por conta/email ('account'),
+  // que e a protecao correta contra brute-force de uma conta especifica.
+  @SkipThrottle({ default: true })
+  @Throttle({ account: { limit: 10, ttl: 900000 } })
   @UseGuards(ThrottlerGuard, LocalAuthGuard)
   @Post('login')
   @ApiOperation({ summary: 'User login' })
@@ -27,7 +33,10 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
-  @Throttle({ default: { limit: 3, ttl: 60000 }, account: { limit: 10, ttl: 900000 } })
+  // Mesmo motivo do login: o cadastro tambem chega pelo IP compartilhado da
+  // Vercel. Chaveamos por conta/email ('account'), nao por IP.
+  @SkipThrottle({ default: true })
+  @Throttle({ account: { limit: 10, ttl: 900000 } })
   @UseGuards(ThrottlerGuard)
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
