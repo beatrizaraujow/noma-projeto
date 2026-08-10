@@ -77,8 +77,26 @@ export const authOptions: AuthOptions = {
 
           return null;
         } catch (error) {
-          console.error('Auth error:', error);
-          return null;
+          const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+          // 401 = credencial realmente invalida -> vira 'CredentialsSignin' e a
+          // tela mostra "email ou senha incorretos".
+          if (status === 401) {
+            return null;
+          }
+
+          // Os demais casos NAO sao senha errada: rate limit (429), erro do
+          // servidor (5xx) ou backend inacessivel/timeout. Propaga um codigo para
+          // a tela de login mostrar a causa certa em vez de acusar a senha.
+          const code = axios.isAxiosError(error) ? error.code : undefined;
+          const reason =
+            status === 429
+              ? 'RateLimited'
+              : status && status >= 500
+                ? 'ServerError'
+                : 'ServerUnavailable';
+          console.error('Auth error:', { status, code, message: (error as Error)?.message });
+          throw new Error(reason);
         }
       },
     }),
