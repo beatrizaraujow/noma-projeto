@@ -384,7 +384,7 @@ export class WorkflowService {
   private async executeWebhook(config: any, context: any) {
     const { url, method, headers, body } = config;
 
-    const response: any = await fetch(url, {
+    const response = await fetch(url, {
       method: method || 'POST',
       headers: {
         'Content-Type': 'application/json',
