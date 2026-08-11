@@ -134,6 +134,7 @@ Checklist de deploy: [docs/DEPLOY_CHECKLIST.md](docs/DEPLOY_CHECKLIST.md).
 
 | Tema | Arquivo |
 | --- | --- |
+| Contexto p/ desenvolver (back/front) | [docs/BACKEND_CONTEXT.md](docs/BACKEND_CONTEXT.md) · [docs/FRONTEND_CONTEXT.md](docs/FRONTEND_CONTEXT.md) |
 | Arquitetura geral | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Referência da API | [docs/API.md](docs/API.md) |
 | Design system / UI | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · [docs/COMPONENT_LIBRARY.md](docs/COMPONENT_LIBRARY.md) |
