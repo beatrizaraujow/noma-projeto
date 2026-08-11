@@ -12,6 +12,9 @@ import {
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: 'Email ou senha incorretos. Verifique seus dados e tente novamente.',
+  RateLimited: 'Muitas tentativas de login. Aguarde cerca de 1 minuto e tente novamente.',
+  ServerError: 'O servidor teve um problema ao processar o login. Tente novamente em instantes.',
+  ServerUnavailable: 'Nao foi possivel conectar ao servidor agora. Verifique sua conexao e tente novamente em instantes.',
   google: 'Login com Google nao configurado neste ambiente.',
   OAuthSignin: 'Falha ao iniciar login com Google. Tente novamente.',
   OAuthCallback: 'Falha ao concluir login com Google. Tente novamente.',
@@ -92,9 +95,8 @@ export default function LoginPage() {
 
       if (!result?.ok) {
         const msg =
-          result?.error === 'CredentialsSignin'
-            ? 'Email ou senha incorretos. Verifique seus dados e tente novamente.'
-            : 'Nao foi possivel autenticar. Tente novamente.';
+          AUTH_ERROR_MESSAGES[result?.error ?? ''] ||
+          'Nao foi possivel autenticar. Tente novamente.';
         throw new Error(msg);
       }
 

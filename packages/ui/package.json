@@ -4,7 +4,7 @@
   "main": "index.tsx",
   "types": "index.tsx",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . --ext .ts,.tsx --no-error-on-unmatched-pattern",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
