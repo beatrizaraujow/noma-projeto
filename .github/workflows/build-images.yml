@@ -1,0 +1,408 @@
+# =============================================================================
+# Build e publicacao das imagens do NOMA no GHCR
+#
+# Existe por uma restricao de infra, nao por gosto: o VPS Hostinger e
+# compartilhado com o SB Clips, e `pnpm install` do monorepo sao centenas de MB
+# sustentados — exatamente o padrao que dispara o estrangulamento de rede do
+# provedor, que derruba a saida da MAQUINA INTEIRA por 8 a 20 minutos.
+# Por isso: build aqui, `docker pull` la. Nunca build na maquina.
+# Ver docs/INFRA_COEXISTENCIA_SERVIDOR.md secao 8.4.
+#
+# DOIS MODOS
+#
+#   validacao  - sem dominio configurado. Builda, roda smoke test e NAO publica.
+#                Serve para provar os Dockerfiles antes de existir DNS.
+#   publicacao - com o dominio configurado. Builda, testa e publica no GHCR.
+#
+# O modo e escolhido automaticamente pela presenca da origem da API.
+#
+# CONFIGURACAO (Settings > Secrets and variables > Actions > Variables):
+#   NOMA_API_ORIGIN   ex: https://api.seudominio.com
+#   NOMA_WEB_ORIGIN   ex: https://noma.seudominio.com
+#
+# Enquanto nao existirem, todo run cai em modo validacao — o que e o
+# comportamento desejado agora.
+# =============================================================================
+
+name: Build imagens (GHCR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_origin:
+        description: 'Origem publica da API (sobrepoe a variavel NOMA_API_ORIGIN). Ex: https://api.seudominio.com'
+        required: false
+        type: string
+      publicar:
+        description: 'Publicar no GHCR (ignorado em modo validacao)'
+        required: false
+        default: true
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - 'docker-compose.prod.yml'
+      - '.github/workflows/build-images.yml'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Decide o modo antes de gastar tempo de build.
+  # ---------------------------------------------------------------------------
+  contexto:
+    runs-on: ubuntu-latest
+    outputs:
+      modo: ${{ steps.decide.outputs.modo }}
+      publicar: ${{ steps.decide.outputs.publicar }}
+      api_origin: ${{ steps.decide.outputs.api_origin }}
+      ws_origin: ${{ steps.decide.outputs.ws_origin }}
+      owner: ${{ steps.decide.outputs.owner }}
+    steps:
+      - name: Decide modo, origens e owner
+        id: decide
+        env:
+          INPUT_ORIGIN: ${{ inputs.api_origin }}
+          VAR_ORIGIN: ${{ vars.NOMA_API_ORIGIN }}
+          INPUT_PUBLICAR: ${{ inputs.publicar }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+
+          # GHCR so aceita namespace em minusculas.
+          echo "owner=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+          ORIGIN="${INPUT_ORIGIN:-$VAR_ORIGIN}"
+
+          if [ -z "$ORIGIN" ]; then
+            echo "modo=validacao"   >> "$GITHUB_OUTPUT"
+            echo "publicar=false"   >> "$GITHUB_OUTPUT"
+            # Host deliberadamente invalido: se por acidente esta imagem for
+            # publicada e usada, ela falha alto em vez de servir um bundle
+            # apontando para localhost.
+            echo "api_origin=https://api.invalido.local" >> "$GITHUB_OUTPUT"
+            echo "ws_origin=wss://api.invalido.local"    >> "$GITHUB_OUTPUT"
+            echo "::warning::Modo VALIDACAO: nenhuma origem de API configurada. As imagens serao construidas e testadas, mas NAO publicadas. Defina a variavel NOMA_API_ORIGIN para publicar."
+            exit 0
+          fi
+
+          case "$ORIGIN" in
+            https://*) : ;;
+            *) echo "::error::NOMA_API_ORIGIN deve comecar com https:// (recebido: $ORIGIN)"; exit 1 ;;
+          esac
+
+          # O codigo monta ${API_URL}/api/... — a origem nao pode terminar em /api
+          # nem em barra, senao viram //api ou /api/api.
+          case "$ORIGIN" in
+            */api|*/api/|*/) echo "::error::NOMA_API_ORIGIN nao deve terminar em / nem em /api. O codigo concatena /api. Recebido: $ORIGIN"; exit 1 ;;
+          esac
+
+          echo "modo=publicacao" >> "$GITHUB_OUTPUT"
+          echo "publicar=${INPUT_PUBLICAR:-true}" >> "$GITHUB_OUTPUT"
+          echo "api_origin=$ORIGIN" >> "$GITHUB_OUTPUT"
+          echo "ws_origin=$(echo "$ORIGIN" | sed 's#^https://#wss://#')" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # API
+  # ---------------------------------------------------------------------------
+  api:
+    needs: contexto
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login no GHCR
+        if: needs.contexto.outputs.publicar == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Metadados / tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ needs.contexto.outputs.owner }}/noma-api
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Carrega no daemon local para o smoke test rodar antes de publicar.
+      - name: Build (carrega local)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          load: true
+          tags: noma-api:test
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      # ---------------------------------------------------------------------
+      # Smoke test. Prova o ponto de falha mais provavel deste Dockerfile:
+      # `pnpm prune --prod` pode ter levado o client Prisma gerado. Se levou, o
+      # PrismaService estoura no import e o container morre no boot — que e
+      # exatamente o que este teste detecta.
+      #
+      # Sem banco de proposito: o PrismaService tolera DB offline (so warning),
+      # entao a API deve subir e servir o Swagger mesmo assim.
+      # ---------------------------------------------------------------------
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+
+          docker run -d --name api-smoke -p 3001:3001 \
+            -e JWT_SECRET=smoke-test-secret-nao-usar-em-producao \
+            -e DATABASE_URL=postgresql://x:x@127.0.0.1:5432/x \
+            -e RUN_DB_PUSH=false \
+            noma-api:test
+
+          echo "Aguardando a API responder..."
+          for i in $(seq 1 40); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3001/api/docs; then
+              echo "OK: /api/docs respondeu na tentativa $i"
+              break
+            fi
+            if ! docker ps --filter name=api-smoke --filter status=running -q | grep -q .; then
+              echo "::error::O container morreu durante o boot."
+              docker logs api-smoke
+              exit 1
+            fi
+            sleep 3
+            if [ "$i" = 40 ]; then
+              echo "::error::Timeout: /api/docs nao respondeu em 120s."
+              docker logs api-smoke
+              exit 1
+            fi
+          done
+
+          # O client Prisma tem que estar presente. Este grep pega justamente o
+          # estrago do prune.
+          if docker logs api-smoke 2>&1 | grep -qi 'did not initialize yet\|Cannot find module .*prisma'; then
+            echo '::error::Client Prisma ausente na imagem: o pnpm prune --prod levou o client gerado. Corrija rodando prisma generate no estagio runner.'
+            docker logs api-smoke
+            exit 1
+          fi
+
+          # JWT_SECRET ausente tem que abortar o boot (main.ts). Se subir, a
+          # protecao regrediu.
+          #
+          # A saida e capturada antes do grep de proposito: este container SAI COM
+          # 1 (process.exit(1)), e com `pipefail` um `docker run | grep` daria
+          # falso negativo — a pipeline falharia pelo docker, nao pelo grep.
+          SAIDA_SEM_JWT=$(docker run --rm \
+            -e DATABASE_URL=postgresql://x:x@127.0.0.1:5432/x \
+            noma-api:test 2>&1 || true)
+
+          if echo "$SAIDA_SEM_JWT" | grep -q 'FATAL: JWT_SECRET'; then
+            echo "OK: aborta o boot sem JWT_SECRET."
+          else
+            echo "::error::A API subiu sem JWT_SECRET. A protecao de main.ts regrediu."
+            echo "$SAIDA_SEM_JWT"
+            exit 1
+          fi
+
+          docker rm -f api-smoke
+
+      - name: Tamanho da imagem
+        run: |
+          echo "### Imagem da API" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          docker images noma-api:test --format 'noma-api  {{.Size}}' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Referencia: a imagem single-stage anterior tinha ~1-2 GB.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publica no GHCR
+        if: needs.contexto.outputs.publicar == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            projeto=noma
+          cache-from: type=gha,scope=api
+
+  # ---------------------------------------------------------------------------
+  # WEB
+  # ---------------------------------------------------------------------------
+  web:
+    needs: contexto
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login no GHCR
+        if: needs.contexto.outputs.publicar == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Metadados / tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ needs.contexto.outputs.owner }}/noma-web
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # NEXT_PUBLIC_* sao inlinadas no bundle do cliente em tempo de BUILD, nao
+      # lidas em runtime. Consequencia: a imagem fica atrelada ao dominio, e
+      # trocar de dominio exige rebuild. Dai as origens virarem build-args.
+      - name: Build (carrega local)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          load: true
+          tags: noma-web:test
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ needs.contexto.outputs.api_origin }}
+            NEXT_PUBLIC_WS_URL=${{ needs.contexto.outputs.ws_origin }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+      # ---------------------------------------------------------------------
+      # Smoke test. Prova o ponto de falha mais provavel deste Dockerfile:
+      # `output: 'standalone'` em monorepo pnpm pode nao levar os pacotes de
+      # workspace (@nexora/ui, @nexora/types). Se nao levou, o server sobe e
+      # quebra com "Cannot find module" na primeira pagina renderizada — por isso
+      # o teste pede uma pagina de verdade, nao so a raiz.
+      # ---------------------------------------------------------------------
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+
+          docker run -d --name web-smoke -p 3000:3000 \
+            -e NEXTAUTH_URL=http://127.0.0.1:3000 \
+            -e NEXTAUTH_SECRET=smoke-test-secret-nao-usar-em-producao \
+            -e NEXT_PUBLIC_API_URL=${{ needs.contexto.outputs.api_origin }} \
+            noma-web:test
+
+          echo "Aguardando o Next responder..."
+          for i in $(seq 1 40); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3000/login; then
+              echo "OK: /login renderizou na tentativa $i"
+              break
+            fi
+            if ! docker ps --filter name=web-smoke --filter status=running -q | grep -q .; then
+              echo "::error::O container morreu durante o boot."
+              docker logs web-smoke
+              exit 1
+            fi
+            sleep 3
+            if [ "$i" = 40 ]; then
+              echo "::error::Timeout: /login nao respondeu em 120s."
+              docker logs web-smoke
+              exit 1
+            fi
+          done
+
+          if docker logs web-smoke 2>&1 | grep -qi "Cannot find module"; then
+            echo "::error::Modulo ausente no standalone — outputFileTracingRoot nao levou os pacotes de workspace."
+            docker logs web-smoke
+            exit 1
+          fi
+
+          # Os assets estaticos nao entram no standalone automaticamente; se o
+          # COPY do .next/static falhar, a pagina sobe sem CSS e sem JS.
+          echo "Verificando se os assets estaticos foram servidos..."
+          ASSET=$(curl -fsS http://127.0.0.1:3000/login | grep -o '/_next/static/[^"]*\.js' | head -1)
+          if [ -z "$ASSET" ]; then
+            echo "::error::Nenhuma referencia a /_next/static no HTML."
+            exit 1
+          fi
+          curl -fsS -o /dev/null "http://127.0.0.1:3000${ASSET}" \
+            && echo "OK: asset estatico servido ($ASSET)" \
+            || { echo "::error::Asset $ASSET retornou erro — o COPY de .next/static falhou."; exit 1; }
+
+          docker rm -f web-smoke
+
+      - name: Tamanho da imagem
+        run: |
+          echo "### Imagem do Web" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          docker images noma-web:test --format 'noma-web  {{.Size}}' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "Origem da API embutida no bundle: \`${{ needs.contexto.outputs.api_origin }}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publica no GHCR
+        if: needs.contexto.outputs.publicar == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ needs.contexto.outputs.api_origin }}
+            NEXT_PUBLIC_WS_URL=${{ needs.contexto.outputs.ws_origin }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            projeto=noma
+          cache-from: type=gha,scope=web
+
+  # ---------------------------------------------------------------------------
+  # Resumo com as linhas prontas para o .env do servidor.
+  # ---------------------------------------------------------------------------
+  resumo:
+    needs: [contexto, api, web]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resumo
+        run: |
+          {
+            echo "## Resultado"
+            echo ""
+            echo "| Item | Valor |"
+            echo "|---|---|"
+            echo "| Modo | \`${{ needs.contexto.outputs.modo }}\` |"
+            echo "| API | ${{ needs.api.result }} |"
+            echo "| Web | ${{ needs.web.result }} |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ needs.contexto.outputs.publicar }}" = "true" ]; then
+            {
+              echo "### Para o /opt/noma/.env no servidor"
+              echo ""
+              echo '```'
+              echo "NOMA_API_IMAGE=${{ env.REGISTRY }}/${{ needs.contexto.outputs.owner }}/noma-api:sha-${{ github.sha }}"
+              echo "NOMA_WEB_IMAGE=${{ env.REGISTRY }}/${{ needs.contexto.outputs.owner }}/noma-web:sha-${{ github.sha }}"
+              echo '```'
+              echo ""
+              echo "Depois, no servidor: \`docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d\`"
+              echo ""
+              echo "> Deploy so em janela de baixo uso do SB Clips, e nunca em paralelo com um render."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### Modo validacao — nada foi publicado"
+              echo ""
+              echo "Os Dockerfiles foram construidos e passaram no smoke test, mas nenhuma imagem foi enviada ao GHCR."
+              echo ""
+              echo "Para publicar, defina a variavel de repositorio **NOMA_API_ORIGIN** (Settings > Secrets and variables > Actions > Variables) com a origem publica da API, ex: \`https://api.seudominio.com\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

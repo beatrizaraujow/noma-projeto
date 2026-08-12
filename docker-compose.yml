@@ -6,14 +6,19 @@ services:
       POSTGRES_PASSWORD: noma_dev
       POSTGRES_DB: noma_dev
     ports:
-      - "5432:5432"
+      # Bind explicito em loopback. Com "5432:5432" o Docker publica em 0.0.0.0 e
+      # insere DNAT na cadeia nat/DOCKER, que NAO passa pelo INPUT do UFW: o
+      # firewall reporta a porta fechada e ela esta aberta na internet. Scanners
+      # varrem a rede atras de Postgres e Redis expostos em minutos.
+      # Ver docs/INFRA_COEXISTENCIA_SERVIDOR.md secao 7.3.
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
 volumes:
   postgres_data:

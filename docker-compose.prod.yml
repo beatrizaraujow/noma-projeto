@@ -1,0 +1,206 @@
+# =============================================================================
+# NOMA - producao no VPS Hostinger (compartilhado com o SB Clips)
+#
+# Base: docs/INFRA_COEXISTENCIA_SERVIDOR.md secao 9.2.1 (KVM 4: 4 vCPU / 16 GB).
+#
+# Tres regras que este arquivo aplica sem excecao:
+#
+#  1. NENHUMA porta em 0.0.0.0. O Docker publica porta via DNAT na cadeia
+#     nat/DOCKER, que NAO passa pelo INPUT do UFW — `ufw status` diz "fechado" e
+#     a porta esta aberta na internet (secao 7.3). So loopback, e so as duas de
+#     HTTP. Postgres e Redis nao publicam nada: a API os alcanca pelo nome na
+#     rede interna.
+#
+#  2. memswap_limit == mem_limit em todos. Sem isso o Docker libera o dobro em
+#     swap: o container "respeita" a RAM e martela o disco, atacando o vizinho
+#     pelo I/O em vez da memoria (secao 5.2).
+#
+#  3. Teto duro de CPU + peso reduzido (cpu_shares 512). O teto torna o consumo
+#     previsivel; o peso faz o ffmpeg do SB Clips ganhar a disputa quando os dois
+#     querem CPU ao mesmo tempo (secao 5.1).
+#
+# Uso:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# As imagens vem de registry, ja construidas. NAO buildar aqui: `pnpm install`
+# do monorepo e centenas de MB sustentados, exatamente o padrao que dispara o
+# estrangulamento de rede do provedor (secao 8.4).
+# =============================================================================
+
+name: noma
+
+services:
+  # ---------------------------------------------------------------- postgres --
+  postgres:
+    image: postgres:16-alpine
+    container_name: noma-postgres
+    restart: on-failure:5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-noma}
+      # O Postgres espera usar o page cache do sistema — que o ffmpeg vai
+      # despejar ao passar um video de GBs pela maquina (secao 2.3). Assuma mais
+      # leitura de disco do que numa maquina dedicada.
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=512MB
+      -c max_connections=100
+    volumes:
+      - ./dados/postgres:/var/lib/postgresql/data
+    # Sem `ports`: deliberado. Para psql do host, use
+    #   docker compose -f docker-compose.prod.yml exec postgres psql -U <user> -d <db>
+    # Se precisar de acesso por TCP, publique SO em loopback: "127.0.0.1:5433:5432"
+    networks: [noma_net]
+    cpus: 0.35
+    cpu_shares: 512
+    mem_limit: 1024m
+    memswap_limit: 1024m
+    mem_swappiness: 0
+    pids_limit: 200
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ------------------------------------------------------------------- redis --
+  redis:
+    image: redis:7-alpine
+    container_name: noma-redis
+    restart: on-failure:5
+    # Redis sem maxmemory cresce ate o limite do container e morre. O teto fica
+    # em ~80% do mem_limit (secao 5.2).
+    command: >
+      redis-server
+      --maxmemory 200mb
+      --maxmemory-policy allkeys-lru
+      --save ''
+      --appendonly no
+    networks: [noma_net]
+    cpus: 0.15
+    cpu_shares: 512
+    mem_limit: 256m
+    memswap_limit: 256m
+    mem_swappiness: 0
+    pids_limit: 100
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------------------- api --
+  api:
+    image: '${NOMA_API_IMAGE:?defina NOMA_API_IMAGE no .env, ex ghcr.io/usuario/noma-api:sha}'
+    container_name: noma-api
+    restart: on-failure:5
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      # ~70-75% do mem_limit: o V8 nao le o cgroup e estoura o limite sozinho.
+      NODE_OPTIONS: --max-old-space-size=768
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-noma}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env — a API aborta o boot sem ele}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7d}
+      # Origem publica do frontend. Alimenta o CORS e os links dos emails.
+      FRONTEND_URL: '${FRONTEND_URL:?defina FRONTEND_URL no .env, ex https://noma.seudominio.com}'
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      # Sincronizacao de schema e opt-in. Deixe false no dia a dia; ligue
+      # deliberadamente quando o schema mudar (ver runbook).
+      RUN_DB_PUSH: ${RUN_DB_PUSH:-false}
+      DB_PUSH_ACCEPT_DATA_LOSS: ${DB_PUSH_ACCEPT_DATA_LOSS:-false}
+    ports:
+      # Faixa 3100-3199 = NOMA. 3000-3099 fica com o SB Clips (secao 9.1).
+      - '127.0.0.1:3101:3001'
+    volumes:
+      - ./dados/uploads:/app/apps/api/uploads
+    networks: [noma_net]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+    cpus: 0.70
+    cpu_shares: 512
+    mem_limit: 1024m
+    memswap_limit: 1024m
+    mem_swappiness: 0
+    pids_limit: 200
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+
+  # --------------------------------------------------------------------- web --
+  web:
+    # As NEXT_PUBLIC_* estao inlinadas nesta imagem em tempo de build. Trocar de
+    # dominio exige rebuild — mudar env aqui nao tem efeito no bundle do cliente.
+    image: '${NOMA_WEB_IMAGE:?defina NOMA_WEB_IMAGE no .env, ex ghcr.io/usuario/noma-web:sha}'
+    container_name: noma-web
+    restart: on-failure:5
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NODE_OPTIONS: --max-old-space-size=576
+      # Estas SAO lidas em runtime (server-side): o authorize() do NextAuth e os
+      # callbacks rodam no servidor.
+      NEXTAUTH_URL: ${FRONTEND_URL:?defina FRONTEND_URL no .env}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?defina NEXTAUTH_SECRET no .env}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?defina NEXT_PUBLIC_API_URL no .env}
+      # Chamadas server-side (authorize do NextAuth, proxy de registro) vao direto
+      # ao container pela rede interna, em vez de sair para o dominio publico,
+      # atravessar o Nginx e voltar para alcancar um vizinho de rede. Menos salto,
+      # menos coisa para dar errado, e nao depende de DNS publico nem de TLS.
+      # Ver apps/web/src/lib/server-api-url.ts.
+      API_INTERNAL_URL: http://api:3001
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    ports:
+      - '127.0.0.1:3100:3000'
+    networks: [noma_net]
+    depends_on:
+      api: { condition: service_started }
+    cpus: 0.30
+    cpu_shares: 512
+    mem_limit: 768m
+    memswap_limit: 768m
+    mem_swappiness: 0
+    pids_limit: 200
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+
+# =============================================================================
+# Rede
+#
+# Sub-rede fixa de proposito: se o Docker escolher uma faixa que a maquina ja usa
+# (VPN, rede privada do provedor, rota interna), o roteamento da MAQUINA INTEIRA
+# quebra — nao so o do container (secao 7.2, risco 7).
+#
+# >>> CONFIRME ANTES DE SUBIR:
+#       ip route
+#       docker network inspect $(docker network ls -q) | grep -i subnet
+#     Se 172.28.0.0/24 estiver em uso, troque aqui. NAO mexa em
+#     /etc/docker/daemon.json: reiniciar o daemon reinicia os containers do
+#     SB Clips (risco 9).
+# =============================================================================
+networks:
+  noma_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24

@@ -1,8 +1,22 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@nexora/ui', '@nexora/types'],
-  
+
+  // Deploy em container (Hostinger): gera .next/standalone, uma arvore
+  // autocontida com so o necessario para rodar `node server.js`. Corta a imagem
+  // final em uma ordem de grandeza — o que aqui e mitigacao de banda, nao
+  // estetica (docs/INFRA_COEXISTENCIA_SERVIDOR.md secao 8.2).
+  output: 'standalone',
+
+  // Obrigatorio em monorepo: sem isso o rastreio de arquivos para na raiz de
+  // apps/web e os pacotes de workspace (@nexora/ui, @nexora/types) ficam de fora
+  // do standalone — o container sobe e quebra no primeiro import.
+  outputFileTracingRoot: path.join(__dirname, '../../'),
+
+
   // Otimizações de imagens
   images: {
     remotePatterns: [

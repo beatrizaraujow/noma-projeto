@@ -7,8 +7,11 @@ import {
   GOOGLE_SIGNUP_ORIGIN_COOKIE,
   parseSignupOriginCookie,
 } from './signup-origin';
+import { serverApiUrl } from './server-api-url';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Este modulo roda no servidor: usa a origem interna quando existir, para nao
+// depender da URL publica de dentro do container. Ver server-api-url.ts.
+const API_URL = serverApiUrl;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || '';
 const HAS_GOOGLE_OAUTH = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
