@@ -29,12 +29,21 @@ if [ "$RUN_DB_PUSH" = "true" ]; then
     exit 1
   fi
 
+  # --skip-generate e obrigatorio, nao otimizacao. Por padrao o `db push` roda
+  # `prisma generate` no fim, e isso falha aqui:
+  #
+  #   Error: Can't write to /usr/local/lib/node_modules/prisma please make sure
+  #   you install "prisma" with the right permissions.
+  #
+  # O container roda como `nestjs` (nao-root) e o prisma global pertence ao root.
+  # De todo modo o client ja foi gerado em tempo de build — regenerar no boot
+  # seria trabalho repetido.
   if [ "$DB_PUSH_ACCEPT_DATA_LOSS" = "true" ]; then
     echo 'AVISO: --accept-data-loss ativo. Operacoes destrutivas serao aplicadas.'
-    prisma db push --schema="$SCHEMA" --accept-data-loss
+    prisma db push --schema="$SCHEMA" --skip-generate --accept-data-loss
   else
     # Sem o flag, o push ABORTA quando detecta perda de dados em vez de aplicar.
-    prisma db push --schema="$SCHEMA"
+    prisma db push --schema="$SCHEMA" --skip-generate
   fi
 
   echo '=== schema sincronizado ==='

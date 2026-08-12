@@ -32,7 +32,11 @@ services:
     name: noma-api
     runtime: docker # se o painel for antigo, a chave e `env: docker`
     plan: free
-    region: oregon
+    # O Postgres no Neon esta em AWS us-east-1 (N. Virginia). Region do compute
+    # tem que ser US East: cada query paga a distancia, e `oregon` (US West)
+    # somaria uma travessia dos EUA em toda ida e volta ao banco.
+    # Se o painel oferecer `virginia`, e ainda melhor — mesma regiao AWS do Neon.
+    region: ohio
 
     # O contexto tem que ser a raiz do repo: o Dockerfile copia o pnpm-lock.yaml,
     # o pnpm-workspace.yaml e os manifests de todos os pacotes.

@@ -19,7 +19,11 @@ ARG PNPM_VERSION=8.12.0
 # --------------------------------------------------------------------- deps --
 FROM node:${NODE_VERSION} AS deps
 ARG PNPM_VERSION
-RUN apk add --no-cache libc6-compat openssl \
+# python3/make/g++: o install do workspace puxa o bcrypt (modulo nativo, dep da
+# API). Quando o download do binario pre-compilado do GitHub falha, ele compila do
+# fonte com node-gyp e precisa de Python — sem isso o build quebra de forma
+# intermitente. Ficam so nos estagios de build; o runner nao os recebe.
+RUN apk add --no-cache libc6-compat openssl python3 make g++ \
  && corepack enable \
  && corepack prepare pnpm@${PNPM_VERSION} --activate
 

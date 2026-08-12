@@ -24,7 +24,18 @@ ARG PRISMA_VERSION=5.8.1
 # --------------------------------------------------------------------- deps --
 FROM node:${NODE_VERSION} AS deps
 ARG PNPM_VERSION
-RUN apk add --no-cache openssl \
+# python3/make/g++ existem por causa do bcrypt, que e modulo nativo.
+#
+# O install dele tenta baixar um binario pre-compilado do GitHub releases. Quando
+# esse download falha — medido aqui com um 503 Service Unavailable — ele cai no
+# fallback de compilar do fonte com node-gyp, que exige Python. Sem essas tres
+# ferramentas o build quebra com `gyp ERR! find Python`, de forma INTERMITENTE:
+# passa quando o GitHub responde, falha quando nao responde. Diagnosticar isso em
+# CI, onde o erro aparece uma vez a cada tantas execucoes, e caro.
+#
+# Elas ficam so aqui e no builder. O runner copia apenas o .node ja compilado
+# dentro de node_modules, entao a imagem final nao carrega compilador nenhum.
+RUN apk add --no-cache openssl python3 make g++ \
  && corepack enable \
  && corepack prepare pnpm@${PNPM_VERSION} --activate
 
@@ -52,7 +63,33 @@ COPY packages/ui/package.json       ./packages/ui/
 # `prisma generate` e falha sem ele.
 COPY packages/database/prisma ./packages/database/prisma
 
-RUN pnpm install --frozen-lockfile
+# --filter @nexora/api... limita quais projetos do workspace ganham arvore de
+# node_modules. Reduz trabalho de linkagem, mas NAO reduz o tamanho da imagem —
+# medido, nao suposto.
+#
+# Por que nao reduz: o virtual store do pnpm (node_modules/.pnpm) e hidratado a
+# partir do LOCKFILE, nao do filtro. Com --frozen-lockfile, todo pacote do
+# lockfile aterrissa no store, mesmo que nenhum projeto selecionado o use. O
+# filtro decide quem ganha symlink, nao quem e baixado.
+#
+# Medido na imagem final, com o filtro ativo — tudo isto continua presente:
+#   @next/swc-linux-x64-musl  149,6 MB
+#   @next/swc-linux-x64-gnu   125,3 MB
+#   next                      101,2 MB
+#   phosphor-react             58,6 MB
+#   @phosphor-icons/react      40,4 MB
+#   lucide-react               27,4 MB
+# Sao deps de PRODUCAO de @nexora/web, entao `pnpm prune --prod` tambem nao as
+# remove — e, medido, o prune nao removia nem as devDependencies.
+#
+# PENDENCIA: a imagem esta em 1,76 GB contra a meta de 200-400 MB, e o caminho
+# certo e `pnpm deploy --filter @nexora/api --prod`, que monta uma arvore
+# autocontida so com o necessario, em vez de copiar o store inteiro. Exige
+# validar o que o bundle precisa em runtime: @nexora/database tem `main:
+# index.ts`, e um .ts nao e requerivel por Node — depende de o webpack do nest
+# ter embutido esse pacote no dist. Trocar 1,4 GB por um container que sobe e
+# quebra no primeiro import nao e economia.
+RUN pnpm install --frozen-lockfile --filter @nexora/api...
 
 # ------------------------------------------------------------------ builder --
 FROM deps AS builder
@@ -61,10 +98,17 @@ COPY . .
 
 RUN pnpm --filter @nexora/api build
 
-# Remove as deps de dev (webpack, nest-cli, jest, cypress e todo o dev do web)
-# da arvore ja instalada. O client Prisma gerado sobrevive: ele mora dentro de
-# @prisma/client, que e dependencia de producao.
-RUN pnpm prune --prod
+# `pnpm prune --prod` foi REMOVIDO daqui: medido nesta imagem, ele nao removia as
+# devDependencies. Depois de rodar, typescript (2x 22 MB) e turbo-linux-64 (21 MB)
+# continuavam presentes. Mantê-lo dava a impressao de poda sem poda nenhuma.
+#
+# PENDENCIA CONHECIDA: as devDependencies da API (nest-cli, webpack, jest, ts) ainda
+# vao para a imagem final — cerca de 150-200 MB. A solucao e um estagio separado com
+# `pnpm install --prod --ignore-scripts` e `prisma generate` no runner, mas exige
+# cuidado com o que o bundle precisa em runtime: @nexora/database tem `main:
+# index.ts`, entao dependendo de como o nest build resolve os pacotes de workspace,
+# o codigo-fonte deles pode ser necessario no runtime. Otimizar sem validar isso
+# troca 200 MB por um container que sobe e quebra no primeiro import.
 
 # ------------------------------------------------------------------- runner --
 FROM node:${NODE_VERSION} AS runner

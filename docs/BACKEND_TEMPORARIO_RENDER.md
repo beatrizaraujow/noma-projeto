@@ -40,13 +40,32 @@ O custo honesto é latência de rede por query, contra ~0 num Postgres local. Pa
 
 ### 1. Postgres no Neon
 
-Crie um projeto e copie a connection string. Ela tem o formato:
+Crie um projeto e copie a connection string. **Use a conexão direta, não a pooled.**
+
+O Neon oferece as duas. Elas se distinguem pelo host:
 
 ```
+# DIRETA — use esta
 postgresql://user:senha@ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+# POOLED — NAO use
+postgresql://user:senha@ep-xxxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+                              ^^^^^^^
 ```
 
-> O `sslmode=require` é obrigatório e já vem na string. O Prisma respeita.
+**Por que:** o [schema.prisma](../packages/database/prisma/schema.prisma) declara
+apenas `url` no `datasource`, sem `directUrl`. A conexão pooled do Neon é
+PgBouncer em modo transaction, que **não suporta** o que o `prisma db push`
+precisa e atrapalha prepared statements no runtime. Com uma única URL declarada,
+a direta é a que funciona nos dois casos.
+
+Se algum dia o número de conexões virar gargalo, o caminho é declarar `directUrl`
+no schema e usar a pooled em `url` com `?pgbouncer=true` — não trocar esta URL.
+
+> O `sslmode=require` é obrigatório e já vem na string; o Prisma respeita.
+>
+> O `binaryTargets` do schema já inclui `linux-musl-openssl-3.0.x`, que é o
+> necessário para a imagem Alpine. Nada a ajustar.
 
 ### 2. Serviço no Render
 
