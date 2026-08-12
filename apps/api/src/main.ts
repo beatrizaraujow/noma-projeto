@@ -24,9 +24,18 @@ async function bootstrap() {
   app.use(compression());
 
   // CORS
+  // FRONTEND_URL e a origem principal. CORS_ORIGINS aceita uma lista separada por
+  // virgula para origens extras (dominio antigo durante uma migracao, preview,
+  // etc.) sem exigir novo build da imagem — a origem fixa da Vercel que existia
+  // aqui deixou de valer com a migracao para o Hostinger.
+  const extraOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
-    'https://noma-teal.vercel.app',
+    ...extraOrigins,
   ].filter(Boolean);
 
   app.enableCors({

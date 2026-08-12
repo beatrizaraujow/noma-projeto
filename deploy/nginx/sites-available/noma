@@ -1,0 +1,184 @@
+# =============================================================================
+# NOMA - virtual hosts
+# Destino: /etc/nginx/sites-available/noma  (habilitar por symlink em sites-enabled/)
+# Requer:  /etc/nginx/conf.d/noma-limits.conf  (zonas e o map de upgrade)
+#
+# -----------------------------------------------------------------------------
+# POR QUE SAO DOIS HOSTNAMES, E NAO UM COM `location /api/`
+# -----------------------------------------------------------------------------
+# A secao 6.6 do docs/INFRA_COEXISTENCIA_SERVIDOR.md propunha um unico bloco com
+# `location /` -> Next e `location /api/` -> Nest. ISSO NAO FUNCIONA neste
+# projeto: o Next tambem serve rotas sob /api/, e elas colidem com as do Nest.
+#
+#   Rota                    Next (apps/web/src/app/api)      Nest (prefixo /api)
+#   ----------------------  -------------------------------  -------------------
+#   /api/auth/session       [...nextauth] - NextAuth         -
+#   /api/auth/callback/*    [...nextauth] - NextAuth         -
+#   /api/auth/providers     [...nextauth] - NextAuth         -
+#   /api/auth/csrf          [...nextauth] - NextAuth         -
+#   /api/auth/register      route.ts (proxy)                 auth.controller  <- COLIDE
+#   /api/auth/login         -                                auth.controller
+#   /api/saved-filters      route.ts                         saved-filters    <- COLIDE
+#   /api/search             route.ts                         search           <- COLIDE
+#
+# Mandar /api/ inteiro para o Nest mata a sessao do NextAuth e o login fica
+# impossivel. Mandar para o Next torna o backend inalcancavel. Nao existe divisao
+# por path que resolva — os dois reivindicam os mesmos caminhos.
+#
+# Por isso: web e API em hostnames separados. NEXT_PUBLIC_API_URL aponta para o
+# host da API, sem sufixo /api (o codigo monta `${API_URL}/api/...`).
+#
+# -----------------------------------------------------------------------------
+# REGRAS INEGOCIAVEIS
+# -----------------------------------------------------------------------------
+#  * NENHUM `default_server` aqui. Se este bloco o declarar e o do SB Clips
+#    tambem, o Nginx recusa a config inteira. Se so este declarar, todo request
+#    que nao casa com server_name — inclusive acesso por IP puro — cai no NOMA
+#    (secao 6.2a, risco 3).
+#  * Aplicar SEMPRE com `nginx -t && systemctl reload nginx`. `restart` com config
+#    invalida derruba os dois sites.
+#  * Nunca editar o arquivo do SB Clips.
+#
+# Substitua noma.seudominio.com / api.seudominio.com pelos dominios reais.
+# =============================================================================
+
+
+# ------------------------------------------------------------ HTTP -> HTTPS ---
+# Mantem /.well-known/acme-challenge/ em HTTP para a renovacao do certbot
+# (certonly --webroot). Sem isso a renovacao falha.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name noma.seudominio.com api.seudominio.com;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+
+# ------------------------------------------------------- FRONTEND (Next.js) ---
+server {
+    listen 443 ssl http2;              # sem default_server
+    listen [::]:443 ssl http2;
+    server_name noma.seudominio.com;   # so o dominio do web
+
+    ssl_certificate     /etc/letsencrypt/live/noma.seudominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/noma.seudominio.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:noma_ssl:10m;
+    ssl_session_timeout 1d;
+
+    # Os security headers vem do next.config.js; nao duplicar aqui.
+
+    client_max_body_size 25m;          # padrao 1m -> upload de anexo daria 413
+
+    # Banda: os primeiros 5 MB saem cheios (navegacao normal nao sente nada),
+    # depois 2 MB/s por conexao. O risco do provedor e a taxa sustentada, nao o
+    # volume (secao 8.3).
+    limit_rate_after 5m;
+    limit_rate 2m;
+    limit_conn noma_conn 20;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/xml+rss image/svg+xml;
+
+    # Assets versionados pelo build: imutaveis, cache agressivo. Serve do Nginx
+    # em vez de acordar o Node a cada request.
+    location /_next/static/ {
+        proxy_pass http://127.0.0.1:3100;
+        proxy_set_header Host $host;
+        add_header Cache-Control 'public, max-age=31536000, immutable';
+        access_log off;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3100;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # O Next usa HMR/streaming; o upgrade e barato manter aqui.
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection $noma_connection_upgrade;
+
+        proxy_connect_timeout 10s;
+        proxy_send_timeout    60s;
+        proxy_read_timeout    60s;
+    }
+}
+
+
+# ---------------------------------------------------------- BACKEND (Nest) ---
+server {
+    listen 443 ssl http2;              # sem default_server
+    listen [::]:443 ssl http2;
+    server_name api.seudominio.com;    # so o dominio da API
+
+    ssl_certificate     /etc/letsencrypt/live/api.seudominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.seudominio.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:noma_api_ssl:10m;
+    ssl_session_timeout 1d;
+
+    client_max_body_size 25m;          # modulo de attachments
+
+    limit_rate_after 5m;
+    limit_rate 2m;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types application/json application/javascript text/plain text/css text/xml;
+
+    # WebSocket (Socket.io) — precisa vir ANTES do location / e exige upgrade
+    # explicito. Sem este bloco o Socket.io cai para long-polling e multiplica
+    # requests. ATENCAO ao acoplamento invisivel da secao 6.3: cada conexao WS
+    # ocupa DOIS slots de worker_connections, e esse pool e compartilhado com o
+    # SB Clips. Estourar derruba conexoes dos DOIS sites.
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:3101;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection $noma_connection_upgrade;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # O padrao de 60s derruba a conexao persistente.
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    location / {
+        # O rate limit da aplicacao cobre so /api/auth/*; as outras rotas do Nest
+        # nao tem throttling (ver CLAUDE.md). Esta zona e a rede de seguranca.
+        limit_req zone=noma_api_limit burst=40 nodelay;
+        limit_conn noma_conn 20;
+
+        proxy_pass http://127.0.0.1:3101;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        # OBRIGATORIO: a API resolve o IP real daqui para o rate limit por IP
+        # (apps/api/src/main.ts). Sem este header, todos os clientes chegam com o
+        # mesmo IP e o throttle de login estrangula todo mundo.
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_connect_timeout 10s;
+        proxy_send_timeout    60s;
+        proxy_read_timeout    60s;
+    }
+}

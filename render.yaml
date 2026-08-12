@@ -1,0 +1,103 @@
+# =============================================================================
+# NOMA - backend temporario no Render (substitui o Railway)
+#
+# POR QUE RENDER, E NAO OUTRA COISA
+#
+# Duas restricoes eliminam quase tudo:
+#
+#  1. A API mantem conexoes Socket.io abertas. Isso descarta serverless
+#     (Vercel Functions, Cloudflare Workers): la nao existe processo persistente.
+#
+#  2. O frontend em https://noma-ashy.vercel.app e HTTPS, e o api-client.ts roda
+#     no NAVEGADOR. Backend em HTTP puro e bloqueado como mixed content. Sem
+#     dominio proprio registrado, precisamos de uma plataforma que de certificado
+#     num subdominio dela.
+#
+# Render atende as duas: processo persistente e HTTPS automatico em
+# *.onrender.com, sem nenhum trabalho de DNS.
+#
+# ISTO E PROVISORIO. O destino e o VPS Hostinger (docs/RUNBOOK_HOSTINGER.md).
+# O banco fica FORA daqui de proposito — ver o comentario de DATABASE_URL.
+#
+# COMO APLICAR
+#   1. Crie o Postgres no Neon (neon.tech) e copie a connection string.
+#   2. No Render: New > Blueprint, aponte para este repositorio.
+#   3. Cole a connection string em DATABASE_URL quando ele pedir.
+#   4. Copie a URL publica gerada (ex: https://noma-api.onrender.com).
+#   5. Na Vercel: NEXT_PUBLIC_API_URL = essa URL, e REDEPLOY (ver docs).
+# =============================================================================
+
+services:
+  - type: web
+    name: noma-api
+    runtime: docker # se o painel for antigo, a chave e `env: docker`
+    plan: free
+    # O Postgres no Neon esta em AWS us-east-1 (N. Virginia). Region do compute
+    # tem que ser US East: cada query paga a distancia, e `oregon` (US West)
+    # somaria uma travessia dos EUA em toda ida e volta ao banco.
+    # Se o painel oferecer `virginia`, e ainda melhor — mesma regiao AWS do Neon.
+    region: ohio
+
+    # O contexto tem que ser a raiz do repo: o Dockerfile copia o pnpm-lock.yaml,
+    # o pnpm-workspace.yaml e os manifests de todos os pacotes.
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+
+    # O Swagger e o unico endpoint que responde sem autenticacao e sem depender de
+    # dado no banco — serve bem como health check.
+    healthCheckPath: /api/docs
+
+    envVars:
+      # PORT NAO e declarada aqui de proposito: o Render injeta a dele, e o
+      # main.ts ja respeita (`process.env.PORT || 3001`) com bind em 0.0.0.0.
+      # Fixar aqui quebraria o roteamento da plataforma.
+
+      - key: NODE_ENV
+        value: production
+
+      # A API ABORTA O BOOT sem esta variavel (main.ts). generateValue faz o
+      # Render sortear um segredo forte e guardar — nao reaproveite o valor de
+      # desenvolvimento, que esta versionado no repositorio.
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRATION
+        value: 7d
+
+      # sync: false = o Render pede o valor na criacao e nao versiona aqui.
+      #
+      # O banco fica em Postgres gerenciado (Neon) e NAO no Render de proposito:
+      # compute e descartavel, dado nao e. Assim, quando o backend migrar para o
+      # Hostinger, so o compute muda — nenhuma migracao de dados, nenhum risco de
+      # migrar duas vezes.
+      - key: DATABASE_URL
+        sync: false
+
+      # Origem do frontend. Alimenta o CORS e os links dos emails. Sem isto o
+      # navegador bloqueia as chamadas do api-client por CORS.
+      - key: FRONTEND_URL
+        value: https://noma-ashy.vercel.app
+
+      # Origens extras separadas por virgula, se houver outro deploy da Vercel em
+      # uso durante a transicao (ex: https://noma-teal.vercel.app).
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Cria/atualiza o schema no boot. Necessario no primeiro deploy, porque o
+      # banco do Neon comeca vazio.
+      #
+      # >>> DEPOIS DO PRIMEIRO DEPLOY, MUDE PARA false NO PAINEL. <<<
+      # Deixar true faz o push rodar a cada restart. Sem
+      # DB_PUSH_ACCEPT_DATA_LOSS o push ABORTA em vez de destruir, entao nao ha
+      # risco de perda silenciosa — mas o boot passa a falhar se houver drift, e
+      # a causa nao e obvia no log.
+      - key: RUN_DB_PUSH
+        value: 'true'
+
+      - key: DB_PUSH_ACCEPT_DATA_LOSS
+        value: 'false'
+
+      # Opcionais: sem OPENAI_API_KEY o modulo `ai` fica desligado (gated), o que
+      # e o comportamento esperado.
+      - key: OPENAI_API_KEY
+        sync: false

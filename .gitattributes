@@ -1,0 +1,30 @@
+# =============================================================================
+# Fim de linha
+#
+# Este repositorio e desenvolvido no Windows com core.autocrlf=true, o que
+# converte arquivos para CRLF no working tree. Para os arquivos abaixo isso
+# QUEBRA em producao:
+#
+#   * Script .sh com CRLF em container Linux: o kernel le o `\r` como parte do
+#     shebang e falha com "no such file or directory" — mensagem que nao tem
+#     nenhuma relacao com a causa e custa horas para diagnosticar.
+#   * Config do Nginx e compose toleram CRLF, mas o `\r` vaza para dentro de
+#     valores e heredocs.
+#
+# Estas regras sao cirurgicas de proposito: um `* text=auto eol=lf` global
+# reescreveria o working tree inteiro no proximo checkout.
+# =============================================================================
+
+*.sh                text eol=lf
+Dockerfile          text eol=lf
+*.Dockerfile        text eol=lf
+docker-compose*.yml text eol=lf
+deploy/nginx/**     text eol=lf
+
+# O .dockerignore precisa de LF por um motivo especifico: o padrao e comparado
+# como texto puro, e um `\r` no fim da linha entra no padrao. `apps/web\r` nao
+# casa com `apps/web` — a exclusao passa a ser silenciosamente ignorada.
+.dockerignore       text eol=lf
+
+# Scripts de PowerShell continuam CRLF (convencao do Windows).
+*.ps1               text eol=crlf

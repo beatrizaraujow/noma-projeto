@@ -1,0 +1,115 @@
+# =============================================================================
+# NOMA - stack completo local, em containers
+#
+# Diferente do docker-compose.prod.yml em tres coisas:
+#   - builda a partir do codigo (o de producao consome imagem de registry)
+#   - segredos de desenvolvimento inline, para funcionar sem nenhum setup
+#   - sem tetos de CPU/memoria: aqui nao existe vizinho para proteger
+#
+# Uso:
+#   docker compose -f docker-compose.local.yml up --build
+#
+#   web  -> http://localhost:3000
+#   api  -> http://localhost:3001/api/docs
+#
+# Primeiro usuario (o seed usa ts-node, que nao existe na imagem de producao):
+#   curl -X POST http://localhost:3001/api/auth/register \
+#     -H 'Content-Type: application/json' \
+#     -d '{"email":"voce@local.dev","password":"senha123456","name":"Voce"}'
+#
+# Derrubar tudo, inclusive o banco:
+#   docker compose -f docker-compose.local.yml down -v
+# =============================================================================
+
+name: noma-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: noma
+      POSTGRES_PASSWORD: noma_dev
+      POSTGRES_DB: noma_dev
+    ports:
+      # Loopback para o Prisma Studio e psql do host alcancarem.
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres_local:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U noma -d noma_dev']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '127.0.0.1:6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://noma:noma_dev@postgres:5432/noma_dev
+      REDIS_URL: redis://redis:6379
+      # Segredo de desenvolvimento: nao reutilize em producao.
+      JWT_SECRET: local-dev-secret-nao-usar-em-producao-12345678
+      JWT_EXPIRATION: 7d
+      FRONTEND_URL: http://localhost:3000
+      # Local o banco comeca vazio, entao sincronizar o schema no boot e seguro e
+      # conveniente. Em producao isto fica false — ver docker-entrypoint.sh.
+      RUN_DB_PUSH: 'true'
+      DB_PUSH_ACCEPT_DATA_LOSS: 'false'
+    ports:
+      - '127.0.0.1:3001:3001'
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+    healthcheck:
+      # A imagem nao tem curl nem wget (alpine enxuta); o node ja esta ali.
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:3001/api/docs',r=>process.exit(r.statusCode<400?0:1)).on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Inlinada no bundle do cliente em tempo de build: e o NAVEGADOR que
+        # resolve esta URL, por isso `localhost` e a porta publicada da API.
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+        NEXT_PUBLIC_WS_URL: ws://localhost:3001
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: local-dev-nextauth-secret-nao-usar-em-producao
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      # O ponto que faz o login funcionar em container: o authorize() do NextAuth
+      # roda DENTRO deste container, e ali `localhost:3001` seria o proprio
+      # container, nao a API. Este nome resolve pela rede do compose.
+      # Ver apps/web/src/lib/server-api-url.ts.
+      API_INTERNAL_URL: http://api:3001
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  postgres_local:

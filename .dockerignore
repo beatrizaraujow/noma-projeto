@@ -1,10 +1,53 @@
-.git
-.gitignore
-node_modules
-apps/*/node_modules
-packages/*/node_modules
-apps/web
+# =============================================================================
+# Contexto de build do Docker
+#
+# Um unico .dockerignore vale para TODOS os builds feitos a partir da raiz —
+# tanto apps/api/Dockerfile quanto apps/web/Dockerfile.
+#
+# ATENCAO: a versao anterior tinha `apps/web` nesta lista. Fazia sentido quando
+# so a API tinha Dockerfile (encurtava o contexto), mas quebra o build do web:
+# o codigo dele simplesmente nao chegaria ao contexto e o `COPY` falharia.
+#
+# As exclusoes de node_modules sao as mais importantes e nao sao sobre tamanho:
+# os builds rodam `pnpm install` DENTRO do container (Linux/musl) e depois fazem
+# `COPY . .`. Sem excluir, o node_modules do Windows sobrescreveria o do
+# container, trocando binarios nativos (engine do Prisma, esbuild, swc) por
+# versoes de outra plataforma. O build quebraria com erro que nao aponta para a
+# causa.
+# =============================================================================
+
+# --- Binarios nativos de outra plataforma: NUNCA copiar ---
+**/node_modules
+
+# --- Artefatos de build (gerados dentro do container) ---
 **/.next
 **/dist
+**/.turbo
+**/coverage
+
+# --- Git ---
+.git
+.gitignore
+.gitattributes
+
+# --- Segredos: nao devem entrar em imagem nenhuma ---
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- Infra e docs: nao fazem parte de nenhuma imagem ---
+.github
+.vercel
+docs
+deploy
+scripts
+docker-compose*.yml
+nginx.conf
+railway.json
+ecosystem.config.js
+
+# --- Ruido ---
 **/*.log
-docker-compose.yml
+**/.DS_Store
+**/cypress/videos
+**/cypress/screenshots

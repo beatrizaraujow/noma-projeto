@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { serverApiUrl } from '@/lib/server-api-url';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Route handler roda no servidor: usa a origem interna quando existir, para nao
+// depender da URL publica de dentro do container. Ver server-api-url.ts.
+const API_URL = serverApiUrl;
 
 export async function POST(request: NextRequest) {
   try {
